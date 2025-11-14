@@ -1,0 +1,38 @@
+classDiagram
+
+    class Student {
+
+        +StudentId
+
+        +Name
+
+    }
+
+    class Profile
+
+    class Interest
+
+    class Talent
+
+    class SkillProgress
+
+    Student --> Profile
+
+    Student --> Interest
+
+    Student --> Talent
+
+    Student --> SkillProgress
+
+
+
+    class Industry --> Subfield
+
+    Subfield --> SkillTree
+
+    SkillTree --> Skill
+
+    SkillTree --> SpecializedTraining
+
+    Skill --> Course
+

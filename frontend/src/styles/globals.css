@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #ffffff;
+    --color-text: #000000;
+    --color-border: #000000;
+    --color-secondary-bg: #fafafa;
+    --color-hover-bg: #f5f5f5;
+    --color-secondary-text: #666666;
+  }
+
+  [data-theme="dark"] {
+    --color-bg: #000000;
+    --color-text: #ffffff;
+    --color-border: #ffffff;
+    --color-secondary-bg: #1a1a1a;
+    --color-hover-bg: #2a2a2a;
+    --color-secondary-text: #cccccc;
+  }
+
+  * {
+    @apply border-border-gray;
+  }
+
+  body {
+    @apply bg-white text-black font-sans;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  h1 {
+    @apply text-h1 font-light;
+  }
+
+  h2 {
+    @apply text-h2 font-medium;
+  }
+
+  h3 {
+    @apply text-h3 font-medium;
+  }
+}
+
+@layer components {
+  /* Button Styles */
+  .btn {
+    @apply px-medium py-small border-bold border-black bg-white text-black font-medium rounded-subtle transition-standard;
+    min-height: 44px;
+  }
+
+  .btn:hover {
+    @apply bg-black text-white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .btn:active {
+    @apply bg-black text-white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .btn-primary {
+    @apply bg-black text-white border-black;
+  }
+
+  .btn-primary:hover {
+    @apply bg-dark-gray text-white;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  }
+
+  .btn-inactive {
+    @apply bg-very-light-gray text-medium-gray opacity-60 cursor-not-allowed;
+  }
+
+  .btn-inactive:hover {
+    @apply bg-very-light-gray text-medium-gray;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply bg-white border-bold border-black rounded-card p-medium transition-standard;
+  }
+
+  .card:hover {
+    @apply bg-bg-gray;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .card-selected {
+    @apply bg-black text-white border-black;
+  }
+
+  .card-selected:hover {
+    @apply bg-dark-gray text-white;
+  }
+
+  /* Input Styles */
+  .input {
+    @apply border-bold border-black rounded-subtle px-small py-small bg-white text-black font-sans;
+    min-height: 44px;
+  }
+
+  .input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+  }
+
+  .input:hover {
+    @apply border-dark-gray;
+  }
+
+  /* Badge Styles */
+  .badge {
+    @apply px-small py-tiny rounded-subtle text-small font-medium;
+  }
+
+  .badge-secondary {
+    @apply bg-bg-gray text-black border border-black;
+  }
+
+  /* Progress Bar */
+  .progress {
+    @apply bg-border-gray rounded-full overflow-hidden;
+    height: 6px;
+  }
+
+  .progress-bar {
+    @apply bg-black transition-standard;
+    height: 100%;
+  }
+
+  /* Info Button */
+  .info-btn {
+    @apply w-6 h-6 rounded-full bg-black text-white flex items-center justify-center transition-standard;
+    font-size: 0.75rem;
+  }
+
+  .info-btn:hover {
+    @apply bg-dark-gray;
+    transform: scale(1.1);
+  }
+
+  /* Step Number */
+  .step-number {
+    @apply w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-body flex-shrink-0;
+  }
+
+  /* Dark Mode Overrides */
+  [data-theme="dark"] .btn {
+    @apply border-white bg-black text-white;
+  }
+
+  [data-theme="dark"] .btn:hover {
+    @apply bg-white text-black;
+  }
+
+  [data-theme="dark"] .btn-primary {
+    @apply bg-white text-black border-white;
+  }
+
+  [data-theme="dark"] .btn-primary:hover {
+    @apply bg-dark-secondary-text text-black;
+  }
+
+  [data-theme="dark"] .card {
+    @apply bg-dark-secondary-bg border-white text-white;
+  }
+
+  [data-theme="dark"] .card:hover {
+    @apply bg-dark-hover-bg;
+  }
+
+  [data-theme="dark"] .card-selected {
+    @apply bg-white text-black border-white;
+  }
+
+  [data-theme="dark"] .input {
+    @apply border-white bg-dark-secondary-bg text-white;
+  }
+
+  [data-theme="dark"] .progress-bar {
+    @apply bg-white;
+  }
+
+  [data-theme="dark"] .info-btn {
+    @apply bg-white text-black;
+  }
+
+  [data-theme="dark"] .info-btn:hover {
+    @apply bg-dark-secondary-text;
+  }
+
+  [data-theme="dark"] .step-number {
+    @apply bg-white text-black;
+  }
+}
+
+@layer utilities {
+  .text-secondary {
+    @apply text-medium-gray;
+  }
+
+  .text-muted {
+    @apply text-light-gray;
+  }
+
+  .border-bold {
+    border-width: 2px;
+  }
+
+  .transition-standard {
+    transition: all 0.2s ease;
+  }
+
+  .transition-smooth {
+    transition: all 0.3s ease-out;
+  }
+
+  .transition-fast {
+    transition: all 0.1s ease;
+  }
+}
+

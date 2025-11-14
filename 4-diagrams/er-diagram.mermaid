@@ -1,0 +1,14 @@
+erDiagram
+
+    STUDENT ||--o{ INTEREST : has
+
+    STUDENT ||--o{ TALENT : has
+
+    INDUSTRY ||--o{ SUBFIELD : contains
+
+    SUBFIELD ||--o{ SKILL_TREE : scopes
+
+    SKILL_TREE ||--o{ SKILL : contains
+
+    SKILL ||--o{ COURSE : taught_by
+

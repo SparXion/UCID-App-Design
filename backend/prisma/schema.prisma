@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Note: SQLite doesn't support enums, so we use String with validation
+// HybridMode: DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
+// HybridType: GENERATIVE | AUTOMATION | PROMPT_ENGINEERING | CONFIGURABLE_SYSTEMS
+
+model Student {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  year          Int
+  profile       Profile?
+  interests     Interest[]
+  talents       Talent[]
+  skillProgress SkillProgress[]
+  embedding     String          // Store as JSON string for SQLite
+  hybridMode    String?         // DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
+  createdAt      DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Profile {
+  id            String   @id @default(cuid())
+  studentId     String   @unique
+  bio           String?
+  portfolioUrl  String?
+  student       Student  @relation(fields: [studentId], references: [id])
+}
+
+model Interest {
+  id            String   @id @default(cuid())
+  studentId     String
+  topic         String
+  strength      Int      // 1-5
+  student       Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, topic])
+  @@index([studentId])
+}
+
+model Talent {
+  id            String   @id @default(cuid())
+  studentId     String
+  type          String   // "Explicit" or "Implicit"
+  name          String
+  measuredScore Int      // 0-100
+  student       Student  @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+}
+
+model Industry {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  subfields     Subfield[]
+  coopOpportunities CoopOpportunity[]
+}
+
+model Subfield {
+  id            String          @id @default(cuid())
+  name          String
+  industryId    String
+  industry      Industry        @relation(fields: [industryId], references: [id])
+  skillTrees    SkillTree[]
+  coopOpportunities CoopOpportunity[]
+
+  @@unique([name, industryId])
+}
+
+model SkillTree {
+  id                  String               @id @default(cuid())
+  name                String
+  marketingBlurb      String
+  subfieldId          String
+  subfield            Subfield             @relation(fields: [subfieldId], references: [id])
+  skills              Skill[]
+  specializedTraining SpecializedTraining?
+  coopOpportunities   CoopOpportunity[]
+  isHybrid            Boolean              @default(false)
+  hybridType          String?              // GENERATIVE | AUTOMATION | PROMPT_ENGINEERING | CONFIGURABLE_SYSTEMS
+  systemBlurb         String?
+}
+
+model Skill {
+  id            String          @id @default(cuid())
+  name          String
+  description   String?
+  skillTreeId   String
+  skillTree     SkillTree       @relation(fields: [skillTreeId], references: [id])
+  courses       Course[]
+  progress      SkillProgress[]
+
+  @@index([skillTreeId])
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  title         String
+  provider      String
+  durationHours Int
+  skillId       String
+  skill         Skill    @relation(fields: [skillId], references: [id])
+}
+
+model SpecializedTraining {
+  id            String    @id @default(cuid())
+  skillTreeId   String    @unique
+  title         String
+  description   String?
+  skillTree     SkillTree @relation(fields: [skillTreeId], references: [id])
+}
+
+model SkillProgress {
+  id            String    @id @default(cuid())
+  studentId     String
+  skillId       String
+  proficiency   Int       // 0-100
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  student       Student   @relation(fields: [studentId], references: [id])
+  skill         Skill     @relation(fields: [skillId], references: [id])
+
+  @@unique([studentId, skillId])
+  @@index([studentId])
+  @@index([skillId])
+}
+
+model CoopOpportunity {
+  id            String    @id @default(cuid())
+  industryId    String?
+  subfieldId    String?
+  skillTreeId   String?
+  company       String
+  title         String
+  openings      Int
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  industry      Industry? @relation(fields: [industryId], references: [id])
+  subfield      Subfield? @relation(fields: [subfieldId], references: [id])
+  skillTree     SkillTree?@relation(fields: [skillTreeId], references: [id])
+}
+
