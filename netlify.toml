@@ -1,5 +1,6 @@
 # Netlify Configuration for UCID App Frontend
-# Frontend will be deployed to sparxion.com or ucid.sparxion.com
+# Frontend will be deployed to www.sparxion.com
+# Custom domain: www.sparxion.com
 
 [build]
   # Build command for Vite frontend
