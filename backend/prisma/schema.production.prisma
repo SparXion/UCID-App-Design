@@ -1,0 +1,33 @@
+// Production schema with PostgreSQL
+// Copy this to schema.prisma before deploying
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Note: SQLite doesn't support enums, so we use String with validation
+// HybridMode: DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
+// HybridType: GENERATIVE | AUTOMATION | PROMPT_ENGINEERING | CONFIGURABLE_SYSTEMS
+
+model Student {
+  id            String          @id @default(cuid())
+  name          String
+  email         String          @unique
+  year          Int
+  profile       Profile?
+  interests     Interest[]
+  talents       Talent[]
+  skillProgress SkillProgress[]
+  embedding     String          // Store as JSON string
+  hybridMode    String?         // DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
+  createdAt      DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+// ... rest of schema remains the same
+

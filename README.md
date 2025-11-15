@@ -92,6 +92,15 @@ Uses SQLite for development (easy to launch). The schema includes:
 - Skills, Courses, SkillProgress
 - CoopOpportunities
 
+## Deployment
+
+See `PRODUCTION_DEPLOY.md` for production deployment instructions.
+
+Quick deploy:
+```bash
+./DEPLOY_NOW.sh
+```
+
 ## License
 
 Internal UC/DAAP project

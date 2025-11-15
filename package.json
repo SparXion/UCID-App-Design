@@ -1,0 +1,31 @@
+{
+  "name": "ucid-app",
+  "version": "1.0.0",
+  "description": "UCID App - Career Path Explorer with Bidirectional Mapping + Hybrid ID Evolution",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SparXion/UCID-App-Design.git"
+  },
+  "keywords": [
+    "industrial-design",
+    "career-path",
+    "recommendation-engine",
+    "hybrid-design"
+  ],
+  "author": "SparXion",
+  "license": "MIT"
+}
+

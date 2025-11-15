@@ -11,11 +11,24 @@ router.post('/:id/quiz', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const dto = req.body as QuizSubmissionDto;
+    
+    // Validate required fields
+    if (!dto.talents || !Array.isArray(dto.talents)) {
+      return res.status(400).json({ error: 'Talents array is required' });
+    }
+    if (!dto.interests || !Array.isArray(dto.interests)) {
+      return res.status(400).json({ error: 'Interests array is required' });
+    }
+    
     await studentService.submitQuiz(id, dto);
     res.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Quiz submission error:', error);
-    res.status(500).json({ error: 'Failed to submit quiz' });
+    console.error('Error details:', error.message, error.stack);
+    res.status(500).json({ 
+      error: 'Failed to submit quiz',
+      details: error.message 
+    });
   }
 });
 

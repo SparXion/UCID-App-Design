@@ -33,7 +33,21 @@ export class RecommendationService {
     });
 
     // Parse embedding from JSON string
-    const studentEmbedding = JSON.parse(student.embedding || '[]') as number[];
+    let studentEmbedding: number[] = [];
+    try {
+      if (student.embedding) {
+        studentEmbedding = JSON.parse(student.embedding) as number[];
+      }
+    } catch (e) {
+      console.warn('Failed to parse embedding, using empty array:', e);
+      studentEmbedding = [];
+    }
+    
+    // If no embedding, create a default one from talents/interests
+    if (studentEmbedding.length === 0) {
+      const text = `Talents: ${student.talents.map(t => t.name).join(', ')} | Interests: ${student.interests.map(i => i.topic).join(', ')}`;
+      studentEmbedding = getMockEmbedding(text);
+    }
 
     // Infer hybridMode if not set
     let hybridMode = student.hybridMode;

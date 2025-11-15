@@ -77,27 +77,27 @@ export const FORWARD_MAPPING: Record<string, string[]> = {
   'Metalworking': ['Metal Products', 'Fabrication', 'Material Science', 'Craft Techniques', 'Technical Design'],
   'Textiles': ['Fabric Design', 'Soft Products', 'Material Understanding', 'Pattern Making', 'Textile Products'],
   
-  // Talents → Skills (Direct mapping)
-  'Drawing': ['Sketching', 'Rendering', 'Concept Art', 'Illustration', 'Visual Communication'],
-  'Sculpting': ['3D Modeling', 'Form Development', 'Clay Modeling', 'Digital Sculpting'],
-  'Problem-Solving': ['Design Thinking', 'Root Cause Analysis', 'Iterative Design', 'User Testing', 'Analytical Thinking', 'Creative Solutions', 'Systems Thinking'],
+  // Talents → Skills (Direct mapping) - merged with earlier entries
+  // 'Drawing' already defined above
+  // 'Sculpting' already defined above  
+  // 'Problem-Solving' already defined above
   'Spatial Awareness': ['3D Thinking', 'Volume Understanding', 'Proportions', 'Scale Design', 'Spatial Reasoning', 'Form Understanding'],
   '3D Thinking': ['Spatial Awareness', 'Visualization', 'Form Understanding', 'Volume Understanding'],
   'Color Theory': ['Aesthetic Design', 'Visual Communication', 'Surface Design'],
   'Sketching': ['Drawing', 'Concept Development', 'Visual Communication', 'Rendering'],
   'Rendering': ['Visualization', 'Presentation Skills', 'Aesthetic Design'],
   'CAD': ['3D Modeling', 'Technical Drawing', 'Precision Design', 'Engineering Principles'],
-  'Prototyping': ['Rapid Prototyping', 'Model Making', 'Testing', 'Iteration', 'Fabrication'],
+  // 'Prototyping' already defined above
   'Material Understanding': ['Material Science', 'Material Selection', 'Sustainability'],
   'Ergonomics': ['Human Factors', 'User-Centered Design', 'Comfort Design', 'Biomechanics'],
   'User Research': ['Market Analysis', 'Usability Testing', 'Ethnography', 'Data Interpretation'],
   
   // Activities → Skills
-  'Prototyping': ['Rapid Prototyping', 'Model Making', 'Testing', 'Iteration'],
+  // 'Prototyping' already defined above
   'Collaborating': ['Team Design', 'Cross-Functional Work', 'Feedback Integration', 'Co-Design'],
   'Building': ['Fabrication', 'Assembly', 'Craft Techniques', 'Model Making'],
   'Researching': ['User Research', 'Market Analysis', 'Trend Analysis', 'Data Interpretation'],
-  'Problem-Solving': ['Design Thinking', 'Analytical Thinking', 'Creative Solutions', 'Systems Thinking'],
+  // 'Problem-Solving' already defined above
   
   // Design-Specific → Skills
   'Footwear': ['Last Design', 'Pattern Making', 'Upper Construction', 'Sole Engineering', 'Footwear Design', 'Biomechanics'],

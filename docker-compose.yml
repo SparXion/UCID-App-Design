@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3002:3001"  # Changed to avoid conflict with dev server
+    environment:
+      - DATABASE_URL=postgresql://ucid_user:ucid_password@postgres:5432/ucid_db
+      - CORS_ORIGIN=http://localhost:3000
+      - PORT=3001
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_URL=http://localhost:3001
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=ucid_user
+      - POSTGRES_PASSWORD=ucid_password
+      - POSTGRES_DB=ucid_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Changed to avoid conflict with existing postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+

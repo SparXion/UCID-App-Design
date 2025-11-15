@@ -1,0 +1,25 @@
+# Render.com Configuration for Backend API
+# Deploy backend to: https://ucid-api.sparxion.com
+
+services:
+  - type: web
+    name: ucid-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build && npx prisma generate
+    startCommand: cd backend && npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false  # Set in Render dashboard
+      - key: CORS_ORIGIN
+        value: https://sparxion.com  # Update with your frontend URL
+
+databases:
+  - name: ucid-db
+    databaseName: ucid
+    user: ucid_user
+    plan: free  # Or starter/pro for production
+

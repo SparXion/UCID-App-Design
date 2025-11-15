@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Sparkles, Code, Settings, Lightbulb, Link2, Star, CheckCircle } from 'lucide-react';
+import { Pencil, Sparkles, Code, Settings, Lightbulb, Link2, Star } from 'lucide-react';
 
 type InputMode = 'direct' | 'explore';
 type Confidence = 'Low' | 'Medium' | 'High';
@@ -230,13 +230,6 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
   const [showTalentExamples, setShowTalentExamples] = useState(false);
   const [showInterestExamples, setShowInterestExamples] = useState(false);
 
-  const iconMap: Record<HybridMode, typeof Pencil> = {
-    DIRECT_CREATOR: Pencil,
-    AI_CURATOR: Sparkles,
-    SYSTEM_ARCHITECT: Code,
-    DESIGN_EXECUTOR: Settings
-  };
-
   // Mode selection handlers
   const selectMode = (mode: InputMode) => {
     setInputMode(mode);
@@ -267,7 +260,7 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
     setTalents(updated);
   };
 
-  const selectTalentExample = (example: string, category: string) => {
+  const selectTalentExample = (example: string) => {
     if (!talents.some(t => t.name === example)) {
       addTalent(example, 'example');
     }
@@ -325,7 +318,7 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
     setSubmitting(true);
     try {
       const apiUrl = `/api/v1/students/${studentId}/quiz`;
-      const backendUrl = `http://localhost:3001/api/v1/students/${studentId}/quiz`;
+      const backendUrl = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001'}/api/v1/students/${studentId}/quiz`;
       
       let response = await fetch(apiUrl, {
         method: 'POST',
@@ -348,6 +341,10 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('First request failed:', response.status, errorText);
+        
+        // Fallback to direct backend URL
         response = await fetch(backendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -361,14 +358,18 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
             interests: validInterests.map(i => ({
               topic: i.topic,
               strength: i.strength,
-              confidence: i.confidence
-            }))
+              confidence: i.confidence,
+              mappedConcepts: i.mappedConcepts || getMappedConcepts(i.topic)
+            })),
+            hybridMode: hybridMode || undefined
           })
         });
       }
 
       if (!response.ok) {
-        throw new Error('Failed to submit quiz');
+        const errorText = await response.text();
+        console.error('Quiz submission failed:', response.status, errorText);
+        throw new Error(`Failed to submit quiz: ${response.status} ${errorText}`);
       }
 
       onSubmit();
@@ -461,7 +462,7 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
                     <button
                       key={example}
                       className={`btn text-small ${talents.some(t => t.name === example) ? 'btn-primary' : ''}`}
-                      onClick={() => selectTalentExample(example, category)}
+                      onClick={() => selectTalentExample(example)}
                     >
                       {example}
                     </button>

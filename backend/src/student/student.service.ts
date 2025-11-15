@@ -6,26 +6,37 @@ const prisma = new PrismaClient();
 
 export class StudentProfileService {
   async submitQuiz(studentId: string, dto: QuizSubmissionDto) {
-    // Save interests
-    await prisma.interest.createMany({
-      data: dto.interests.map(i => ({
-        studentId,
-        topic: i.topic,
-        strength: i.strength
-      })),
-      skipDuplicates: true
+    // Delete existing interests and talents for this student first
+    await prisma.interest.deleteMany({
+      where: { studentId }
+    });
+    
+    await prisma.talent.deleteMany({
+      where: { studentId }
     });
 
+    // Save interests
+    if (dto.interests.length > 0) {
+      await prisma.interest.createMany({
+        data: dto.interests.map(i => ({
+          studentId,
+          topic: i.topic,
+          strength: i.strength
+        }))
+      });
+    }
+
     // Save talents
-    await prisma.talent.createMany({
-      data: dto.talents.map(t => ({
-        studentId,
-        type: t.type,
-        name: t.name,
-        measuredScore: t.measuredScore
-      })),
-      skipDuplicates: true
-    });
+    if (dto.talents.length > 0) {
+      await prisma.talent.createMany({
+        data: dto.talents.map(t => ({
+          studentId,
+          type: t.type,
+          name: t.name,
+          measuredScore: t.measuredScore
+        }))
+      });
+    }
 
     // Update embedding (store as JSON string for SQLite)
     // Weight by confidence: High=3x, Medium=2x, Low=1x (default to Medium if not provided)
