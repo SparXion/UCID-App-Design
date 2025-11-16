@@ -59,8 +59,12 @@ const TALENT_EXAMPLES = {
     'Ceramics', 'Jewelry Making', 'Fabrication', 'Assembly', 'Finishing Techniques'
   ],
   'Digital Tools': [
-    'Photoshop', 'Illustrator', 'Rhino', 'SolidWorks', 'Fusion 360',
-    'Blender', 'Keyshot', 'After Effects', 'Figma', 'Sketch', 'Programming'
+    'Procreate', 'Photoshop', 'Illustrator', 'Figma', 'Sketch', 'Adobe XD',
+    'Rhino', 'SolidWorks', 'Fusion 360', 'Blender', 'Maya', 'Cinema 4D',
+    'Keyshot', 'ZBrush', 'Substance Painter', 'Grasshopper',
+    'After Effects', 'Premiere Pro', 'InDesign',
+    'TouchDesigner', 'Unreal Engine', 'Unity',
+    'Marvelous Designer', 'CAD', '3D Modeling', 'Rendering', 'Programming'
   ]
 };
 
