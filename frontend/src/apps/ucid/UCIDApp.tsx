@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SkillTreeExplorer } from './SkillTreeExplorer';
 import { StudentQuiz } from './StudentQuiz';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from '../../config';
 
 export function UCIDApp() {
   // Use a test student ID - in production, get from auth/session

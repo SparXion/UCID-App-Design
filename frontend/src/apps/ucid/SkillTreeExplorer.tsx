@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Briefcase, CheckCircle } from 'lucide-react';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from '../../config';
 
 interface CareerPath {
   id: string;
