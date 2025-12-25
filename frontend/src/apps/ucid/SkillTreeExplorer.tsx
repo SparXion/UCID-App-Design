@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Briefcase, CheckCircle } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 interface CareerPath {
   id: string;
@@ -26,9 +27,10 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Try proxy first, fallback to direct backend URL
+    // Try proxy first (works in dev with Vite proxy, or production with Netlify redirect)
     const apiUrl = `/api/v1/recommendations/students/${studentId}/paths`;
-    const backendUrl = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001'}/api/v1/recommendations/students/${studentId}/paths`;
+    // Fallback to direct backend URL
+    const backendUrl = `${API_BASE_URL}/api/v1/recommendations/students/${studentId}/paths`;
     
     fetch(apiUrl)
       .then(res => {

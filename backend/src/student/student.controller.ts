@@ -12,23 +12,49 @@ router.post('/:id/quiz', async (req: Request, res: Response) => {
     const { id } = req.params;
     const dto = req.body as QuizSubmissionDto;
     
+    // Log request for debugging
+    console.log(`[Quiz Submission] Student ID: ${id}`);
+    console.log(`[Quiz Submission] Talents: ${dto.talents?.length || 0}, Interests: ${dto.interests?.length || 0}`);
+    
     // Validate required fields
     if (!dto.talents || !Array.isArray(dto.talents)) {
+      console.error('[Quiz Submission] Validation failed: talents array missing');
       return res.status(400).json({ error: 'Talents array is required' });
     }
     if (!dto.interests || !Array.isArray(dto.interests)) {
+      console.error('[Quiz Submission] Validation failed: interests array missing');
       return res.status(400).json({ error: 'Interests array is required' });
     }
     
+    // Validate that at least one talent or interest is provided
+    if (dto.talents.length === 0 && dto.interests.length === 0) {
+      console.error('[Quiz Submission] Validation failed: no talents or interests provided');
+      return res.status(400).json({ error: 'At least one talent or interest is required' });
+    }
+    
     await studentService.submitQuiz(id, dto);
+    console.log(`[Quiz Submission] Success for student ${id}`);
     res.json({ success: true });
   } catch (error: any) {
-    console.error('Quiz submission error:', error);
-    console.error('Error details:', error.message, error.stack);
-    res.status(500).json({ 
+    console.error('[Quiz Submission] Error:', error);
+    console.error('[Quiz Submission] Error message:', error.message);
+    console.error('[Quiz Submission] Error stack:', error.stack);
+    
+    // Provide more detailed error information
+    const errorResponse: any = {
       error: 'Failed to submit quiz',
-      details: error.message 
-    });
+      details: error.message
+    };
+    
+    // Include Prisma-specific error details if available
+    if (error.code) {
+      errorResponse.code = error.code;
+    }
+    if (error.meta) {
+      errorResponse.meta = error.meta;
+    }
+    
+    res.status(500).json(errorResponse);
   }
 });
 

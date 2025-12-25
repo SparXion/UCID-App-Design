@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pencil, Sparkles, Code, Settings, Lightbulb, Link2, Star } from 'lucide-react';
+import { API_BASE_URL } from '../../config';
 
 type InputMode = 'direct' | 'explore';
 type Confidence = 'Low' | 'Medium' | 'High';
@@ -321,52 +322,42 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
 
     setSubmitting(true);
     try {
+      // Try proxy first (works in dev with Vite proxy, or production with Netlify redirect)
       const apiUrl = `/api/v1/students/${studentId}/quiz`;
-      const backendUrl = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001'}/api/v1/students/${studentId}/quiz`;
+      // Fallback to direct backend URL
+      const backendUrl = `${API_BASE_URL}/api/v1/students/${studentId}/quiz`;
       
+      const requestBody = {
+        talents: validTalents.map(t => ({
+          type: t.type,
+          name: t.name,
+          measuredScore: t.measuredScore,
+          confidence: t.confidence
+        })),
+        interests: validInterests.map(i => ({
+          topic: i.topic,
+          strength: i.strength,
+          confidence: i.confidence,
+          mappedConcepts: i.mappedConcepts || getMappedConcepts(i.topic)
+        })),
+        hybridMode: hybridMode || undefined
+      };
+
       let response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          talents: validTalents.map(t => ({
-            type: t.type,
-            name: t.name,
-            measuredScore: t.measuredScore,
-            confidence: t.confidence
-          })),
-          interests: validInterests.map(i => ({
-            topic: i.topic,
-            strength: i.strength,
-            confidence: i.confidence,
-            mappedConcepts: i.mappedConcepts || getMappedConcepts(i.topic)
-          })),
-          hybridMode: hybridMode || undefined
-        })
+        body: JSON.stringify(requestBody)
       });
 
+      // If proxy fails, try direct backend URL
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('First request failed:', response.status, errorText);
+        console.error('Proxy request failed:', response.status, errorText);
         
-        // Fallback to direct backend URL
         response = await fetch(backendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            talents: validTalents.map(t => ({
-              type: t.type,
-              name: t.name,
-              measuredScore: t.measuredScore,
-              confidence: t.confidence
-            })),
-            interests: validInterests.map(i => ({
-              topic: i.topic,
-              strength: i.strength,
-              confidence: i.confidence,
-              mappedConcepts: i.mappedConcepts || getMappedConcepts(i.topic)
-            })),
-            hybridMode: hybridMode || undefined
-          })
+          body: JSON.stringify(requestBody)
         });
       }
 
@@ -376,10 +367,26 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
         throw new Error(`Failed to submit quiz: ${response.status} ${errorText}`);
       }
 
+      const result = await response.json();
+      console.log('Quiz submission successful:', result);
       onSubmit();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Quiz submission error:', error);
-      alert('Failed to submit quiz. Please try again.');
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      // Provide more helpful error message
+      let errorMessage = 'Failed to submit quiz. ';
+      if (error.message) {
+        errorMessage += error.message;
+      } else {
+        errorMessage += 'Please check your connection and try again.';
+      }
+      
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }

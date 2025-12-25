@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SkillTreeExplorer } from './SkillTreeExplorer';
 import { StudentQuiz } from './StudentQuiz';
+import { API_BASE_URL } from '../config';
 
 export function UCIDApp() {
   // Use a test student ID - in production, get from auth/session
@@ -18,8 +19,7 @@ export function UCIDApp() {
         
         // Fallback to direct backend URL
         if (!response.ok) {
-          const backendUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001';
-          response = await fetch(`${backendUrl}/api/v1/students/${studentId}/quiz-status`);
+          response = await fetch(`${API_BASE_URL}/api/v1/students/${studentId}/quiz-status`);
         }
         
         if (response.ok) {

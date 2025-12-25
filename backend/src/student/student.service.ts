@@ -63,13 +63,35 @@ export class StudentProfileService {
     const text = `Talents: ${talentTexts.join(', ')} | Interests: ${interestTexts.join(', ')}`;
     const embedding = getMockEmbedding(text);
 
-    await prisma.student.update({
-      where: { id: studentId },
-      data: { 
-        embedding: JSON.stringify(embedding),
-        hybridMode: dto.hybridMode || null
-      }
+    // Check if student exists, create if not
+    const existingStudent = await prisma.student.findUnique({
+      where: { id: studentId }
     });
+
+    if (!existingStudent) {
+      // Create student with minimal required fields
+      // Note: In production, you should have a proper student creation endpoint
+      // For now, we'll create a minimal student record
+      await prisma.student.create({
+        data: {
+          id: studentId,
+          name: 'Student', // Default name - should be updated via proper endpoint
+          email: `${studentId}@temp.uc.edu`, // Temporary email
+          year: 1, // Default year
+          embedding: JSON.stringify(embedding),
+          hybridMode: dto.hybridMode || null
+        }
+      });
+    } else {
+      // Update existing student
+      await prisma.student.update({
+        where: { id: studentId },
+        data: { 
+          embedding: JSON.stringify(embedding),
+          hybridMode: dto.hybridMode || null
+        }
+      });
+    }
   }
 }
 
