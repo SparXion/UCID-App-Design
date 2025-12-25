@@ -4,18 +4,19 @@ import SparxionLanding from '../../assets/Sparxion_Landing-001.svg';
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-large">
-      <div className="max-w-7xl mx-auto text-center relative">
+      <div className="w-full max-w-7xl mx-auto text-center">
         {/* Full Landing Page SVG */}
-        <div className="w-full">
+        <div className="w-full mb-xlarge flex justify-center">
           <img 
             src={SparxionLanding} 
             alt="SparXion - connecting humans with ai" 
-            className="w-full h-auto"
+            className="w-full max-w-5xl h-auto"
+            style={{ minHeight: '500px', objectFit: 'contain' }}
           />
         </div>
 
-        {/* CTA Buttons Overlay - positioned over the SVG */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-medium">
+        {/* CTA Buttons - positioned below the SVG with proper spacing */}
+        <div className="flex gap-medium justify-center items-center flex-wrap mt-large">
           <Link 
             to="/ucid" 
             className="btn text-body px-xlarge py-medium inline-block bg-white border-bold border-black hover:bg-black hover:text-white transition-standard"
