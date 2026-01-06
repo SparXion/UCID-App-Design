@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './auth/auth.controller';
 import studentRoutes from './student/student.controller';
 import recommendationRoutes from './recommendation/recommendation.controller';
+import quizResultRoutes from './quiz-result/quiz-result.controller';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -46,6 +47,7 @@ app.use('/api/v1/auth', authRoutes);
 // API routes (protected)
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/recommendations', recommendationRoutes);
+app.use('/api/v1/quiz-results', quizResultRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

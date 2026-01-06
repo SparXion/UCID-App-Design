@@ -21,6 +21,7 @@ model Student {
   interests     Interest[]
   talents       Talent[]
   skillProgress SkillProgress[]
+  quizResults   QuizResult[]    // Saved quiz results
   embedding     String?         // Store as JSON string, nullable for new users
   hybridMode    String?         // DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
   createdAt      DateTime        @default(now())
@@ -146,5 +147,25 @@ model CoopOpportunity {
   industry      Industry? @relation(fields: [industryId], references: [id])
   subfield      Subfield? @relation(fields: [subfieldId], references: [id])
   skillTree     SkillTree?@relation(fields: [skillTreeId], references: [id])
+}
+
+model QuizResult {
+  id            String    @id @default(cuid())
+  studentId     String
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  name          String?   // Optional name/label for this result (e.g., "First Attempt", "After Internship")
+  
+  // Quiz submission data
+  talents       String    @default("[]") // JSON array of talents
+  interests     String    @default("[]") // JSON array of interests
+  hybridMode   String?   // DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
+  
+  // Recommendations (career paths)
+  recommendations String @default("[]") // JSON array of CareerPathDto
+  
+  createdAt     DateTime  @default(now())
+  
+  @@index([studentId])
+  @@index([createdAt])
 }
 

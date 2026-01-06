@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SkillTreeExplorer } from './SkillTreeExplorer';
 import { StudentQuiz } from './StudentQuiz';
+import { SavedResults } from './SavedResults';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -9,6 +10,7 @@ export function UCIDApp() {
   const studentId = student?.id;
   const [hasTakenQuiz, setHasTakenQuiz] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<'explorer' | 'saved'>('explorer');
 
   // Don't render if auth is still loading or student ID is missing
   if (authLoading || !studentId || !token) {
@@ -98,10 +100,19 @@ export function UCIDApp() {
           </>
         ) : (
           <>
-            <p className="text-body text-secondary mb-medium">
-              Discover personalized skill trees based on your talents and interests
-            </p>
-            <div className="mb-medium">
+            <div className="flex gap-small mb-medium">
+              <button
+                className={`btn text-small ${view === 'explorer' ? 'btn-primary' : ''}`}
+                onClick={() => setView('explorer')}
+              >
+                Career Paths
+              </button>
+              <button
+                className={`btn text-small ${view === 'saved' ? 'btn-primary' : ''}`}
+                onClick={() => setView('saved')}
+              >
+                Saved Results
+              </button>
               <button
                 className="btn text-small"
                 onClick={() => setHasTakenQuiz(false)}
@@ -109,7 +120,17 @@ export function UCIDApp() {
                 Retake Quiz
               </button>
             </div>
-            <SkillTreeExplorer studentId={studentId} />
+            
+            {view === 'explorer' ? (
+              <>
+                <p className="text-body text-secondary mb-medium">
+                  Discover personalized skill trees based on your talents and interests
+                </p>
+                <SkillTreeExplorer studentId={studentId} />
+              </>
+            ) : (
+              <SavedResults studentId={studentId} />
+            )}
           </>
         )}
       </div>

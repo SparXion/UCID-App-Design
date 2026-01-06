@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Briefcase, CheckCircle } from 'lucide-react';
+import { Briefcase, CheckCircle, Save } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -27,6 +27,8 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
   const [paths, setPaths] = useState<CareerPath[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!studentId || !token) return;
@@ -84,6 +86,84 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
       });
   }, [studentId, token]);
 
+  const handleSaveResults = async () => {
+    if (!studentId || !token || paths.length === 0) return;
+
+    setSaving(true);
+    try {
+      // Fetch current student data (talents, interests, hybridMode)
+      const studentHeaders: HeadersInit = {
+        'Authorization': `Bearer ${token}`
+      };
+
+      let studentResponse = await fetch(`/api/v1/students/${studentId}`, { headers: studentHeaders });
+      if (!studentResponse.ok) {
+        studentResponse = await fetch(`${API_BASE_URL}/api/v1/students/${studentId}`, { headers: studentHeaders });
+      }
+
+      if (!studentResponse.ok) {
+        throw new Error('Failed to fetch student data');
+      }
+
+      const studentData = await studentResponse.json();
+
+      // Prepare quiz data for saving
+      const quizData = {
+        talents: studentData.talents || [],
+        interests: studentData.interests || [],
+        hybridMode: studentData.hybridMode || null
+      };
+
+      // Save the result
+      const saveHeaders: HeadersInit = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+      const saveBody = {
+        quizData: {
+          talents: quizData.talents.map((t: any) => ({
+            name: t.name,
+            measuredScore: t.measuredScore,
+            confidence: 'Medium' // Default since we don't store confidence in Talent model
+          })),
+          interests: quizData.interests.map((i: any) => ({
+            topic: i.topic,
+            strength: i.strength,
+            confidence: 'Medium' // Default since we don't store confidence in Interest model
+          })),
+          hybridMode: quizData.hybridMode
+        }
+      };
+
+      let saveResponse = await fetch(`/api/v1/quiz-results`, {
+        method: 'POST',
+        headers: saveHeaders,
+        body: JSON.stringify(saveBody)
+      });
+
+      if (!saveResponse.ok) {
+        saveResponse = await fetch(`${API_BASE_URL}/api/v1/quiz-results`, {
+          method: 'POST',
+          headers: saveHeaders,
+          body: JSON.stringify(saveBody)
+        });
+      }
+
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save results');
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Failed to save results:', error);
+      alert('Failed to save results. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-large text-center text-secondary">
@@ -112,7 +192,19 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-medium">
+    <>
+      <div className="flex justify-between items-center mb-medium">
+        <h2 className="text-h2">Your Career Path Recommendations</h2>
+        <button
+          onClick={handleSaveResults}
+          disabled={saving || saved}
+          className={`btn ${saved ? 'btn-success' : 'btn-primary'} text-small flex items-center gap-small`}
+        >
+          <Save className="w-4 h-4" />
+          {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Results'}
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-medium">
       {paths.map(path => (
         <div
           key={path.id}
@@ -258,7 +350,8 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
           </button>
         </div>
       ))}
-    </div>
+      </div>
+    </>
   );
 }
 

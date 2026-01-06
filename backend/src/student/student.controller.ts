@@ -97,4 +97,41 @@ router.get('/:id/quiz-status', async (req: AuthRequest, res: Response) => {
   }
 });
 
+router.get('/:id', async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const authenticatedId = req.studentId;
+
+    // Ensure user can only get their own data
+    if (id !== authenticatedId) {
+      return res.status(403).json({ error: 'You can only access your own data' });
+    }
+    
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        interests: true,
+        talents: true
+      }
+    });
+
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    res.json({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      year: student.year,
+      talents: student.talents,
+      interests: student.interests,
+      hybridMode: student.hybridMode
+    });
+  } catch (error) {
+    console.error('Get student error:', error);
+    res.status(500).json({ error: 'Failed to get student data' });
+  }
+});
+
 export default router;
