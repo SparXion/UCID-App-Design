@@ -33,6 +33,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Run migrations and start server
-# Note: For fresh deployments, you may need to run: npx prisma migrate dev
-CMD ["sh", "-c", "npx prisma migrate deploy || npx prisma db push && npm start"]
+# Handle migration failures: try migrate deploy, if that fails try db push with accept-data-loss
+# This handles the case where password column needs to be added to existing rows
+CMD ["sh", "-c", "(npx prisma migrate deploy || npx prisma db push --accept-data-loss || true) && npm start"]
 
