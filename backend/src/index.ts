@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import authRoutes from './auth/auth.controller';
 import studentRoutes from './student/student.controller';
 import recommendationRoutes from './recommendation/recommendation.controller';
 
@@ -12,7 +13,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// API routes
+// Auth routes (public)
+app.use('/api/v1/auth', authRoutes);
+
+// API routes (protected)
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/recommendations', recommendationRoutes);
 

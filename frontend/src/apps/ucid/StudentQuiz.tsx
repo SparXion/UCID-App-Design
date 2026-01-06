@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pencil, Sparkles, Code, Settings, Lightbulb, Link2, Star } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
 
 type InputMode = 'direct' | 'explore';
@@ -227,6 +228,7 @@ const INTEREST_EXAMPLES = {
 };
 
 export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
+  const { token } = useAuth();
   const [inputMode, setInputMode] = useState<InputMode | null>(null);
   const [talents, setTalents] = useState<Talent[]>([]);
   const [interests, setInterests] = useState<Interest[]>([]);
@@ -343,9 +345,14 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
         hybridMode: hybridMode || undefined
       };
 
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      };
+
       let response = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(requestBody)
       });
 
@@ -356,7 +363,7 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
         
         response = await fetch(backendUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(requestBody)
         });
       }

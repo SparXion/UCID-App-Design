@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import { getMockEmbedding } from '../src/recommendation/embedding';
 
 const prisma = new PrismaClient();
@@ -177,11 +178,13 @@ async function main() {
     ]
   });
 
-  // Create a test student
+  // Create a test student with password
+  const hashedPassword = await bcrypt.hash('testpassword123', 10);
   const testStudent = await prisma.student.create({
     data: {
       name: "Test Student",
       email: "test@uc.edu",
+      password: hashedPassword,
       year: 2,
       embedding: JSON.stringify(getMockEmbedding("Talents: Drawing, Spatial Awareness | Interests: Footwear, Design"))
     }
@@ -193,8 +196,11 @@ async function main() {
   console.log(`   ID: ${testStudent.id}`);
   console.log(`   Name: ${testStudent.name}`);
   console.log(`   Email: ${testStudent.email}`);
+  console.log(`   Password: testpassword123`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log(`\nUpdate frontend/src/App.tsx with studentId: "${testStudent.id}"`);
+  console.log(`\nYou can now sign in with:`);
+  console.log(`   Email: ${testStudent.email}`);
+  console.log(`   Password: testpassword123`);
   console.log("");
 }
 

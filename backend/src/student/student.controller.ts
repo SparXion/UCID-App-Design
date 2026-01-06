@@ -1,15 +1,25 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { StudentProfileService } from './student.service';
 import { QuizSubmissionDto } from './dto/quiz-submission.dto';
 import { PrismaClient } from '@prisma/client';
+import { authenticateToken, AuthRequest } from '../auth/auth.middleware';
 
 const router = Router();
 const studentService = new StudentProfileService();
 const prisma = new PrismaClient();
 
-router.post('/:id/quiz', async (req: Request, res: Response) => {
+// All student routes require authentication
+router.use(authenticateToken);
+
+router.post('/:id/quiz', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const authenticatedId = req.studentId;
+
+    // Ensure user can only submit quiz for their own account
+    if (id !== authenticatedId) {
+      return res.status(403).json({ error: 'You can only submit quiz for your own account' });
+    }
     const dto = req.body as QuizSubmissionDto;
     
     // Log request for debugging
@@ -58,9 +68,15 @@ router.post('/:id/quiz', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/:id/quiz-status', async (req: Request, res: Response) => {
+router.get('/:id/quiz-status', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const authenticatedId = req.studentId;
+
+    // Ensure user can only check quiz status for their own account
+    if (id !== authenticatedId) {
+      return res.status(403).json({ error: 'You can only check quiz status for your own account' });
+    }
     const student = await prisma.student.findUnique({
       where: { id },
       include: {

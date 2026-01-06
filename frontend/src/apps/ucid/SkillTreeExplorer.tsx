@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Briefcase, CheckCircle } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
 
 interface CareerPath {
@@ -22,17 +23,24 @@ interface CareerPath {
 }
 
 export function SkillTreeExplorer({ studentId }: { studentId: string }) {
+  const { token } = useAuth();
   const [paths, setPaths] = useState<CareerPath[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!studentId || !token) return;
+
     // Try proxy first (works in dev with Vite proxy, or production with Netlify redirect)
     const apiUrl = `/api/v1/recommendations/students/${studentId}/paths`;
     // Fallback to direct backend URL
     const backendUrl = `${API_BASE_URL}/api/v1/recommendations/students/${studentId}/paths`;
     
-    fetch(apiUrl)
+    const headers: HeadersInit = {
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+
+    fetch(apiUrl, { headers })
       .then(res => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -52,7 +60,7 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
       .catch(err => {
         console.warn('Proxy failed, trying direct backend URL:', err);
         // Fallback to direct backend URL
-        return fetch(backendUrl)
+        return fetch(backendUrl, { headers })
           .then(res => {
             if (!res.ok) {
               throw new Error(`HTTP error! status: ${res.status}`);
@@ -74,7 +82,7 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
             setLoading(false);
           });
       });
-  }, [studentId]);
+  }, [studentId, token]);
 
   if (loading) {
     return (

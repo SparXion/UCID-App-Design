@@ -15,12 +15,13 @@ model Student {
   id            String          @id @default(cuid())
   name          String
   email         String          @unique
-  year          Int
+  password      String          // Hashed password
+  year          Int?
   profile       Profile?
   interests     Interest[]
   talents       Talent[]
   skillProgress SkillProgress[]
-  embedding     String          // Store as JSON string for SQLite
+  embedding     String?         // Store as JSON string, nullable for new users
   hybridMode    String?         // DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
   createdAt      DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
