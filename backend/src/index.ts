@@ -7,8 +7,35 @@ import recommendationRoutes from './recommendation/recommendation.controller';
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
+// Parse CORS_ORIGIN - can be comma-separated string or single origin
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const allowedOrigins = corsOrigin.includes(',') 
+  ? corsOrigin.split(',').map(o => o.trim())
+  : corsOrigin;
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (Array.isArray(allowedOrigins)) {
+      if (allowedOrigins.includes(origin) || allowedOrigins.some(allowed => {
+        // Support wildcard patterns like *.netlify.app
+        if (allowed.includes('*')) {
+          const pattern = allowed.replace('*', '.*');
+          return new RegExp(`^${pattern}$`).test(origin);
+        }
+        return allowed === origin;
+      })) {
+        return callback(null, true);
+      }
+    } else if (allowedOrigins === origin || allowedOrigins === '*') {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
