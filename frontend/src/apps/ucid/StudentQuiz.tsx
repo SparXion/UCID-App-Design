@@ -9,7 +9,6 @@ type Source = 'direct' | 'explored' | 'example';
 type HybridMode = 'DIRECT_CREATOR' | 'AI_CURATOR' | 'SYSTEM_ARCHITECT' | 'DESIGN_EXECUTOR';
 
 interface Talent {
-  type: 'Explicit' | 'Implicit';
   name: string;
   measuredScore: number;
   confidence: Confidence;
@@ -249,7 +248,6 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
   // Talent handlers
   const addTalent = (name?: string, source: Source = 'direct') => {
     setTalents([...talents, {
-      type: 'Explicit',
       name: name || '',
       measuredScore: 50,
       confidence: 'Medium',
@@ -331,7 +329,6 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
       
       const requestBody = {
         talents: validTalents.map(t => ({
-          type: t.type,
           name: t.name,
           measuredScore: t.measuredScore,
           confidence: t.confidence
@@ -465,7 +462,7 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
         
         <p className="text-small text-secondary mb-medium">
           {inputMode === 'direct'
-            ? 'What are you naturally good at? This can be explicit (like drawing, sculpting) or implicit (like spatial awareness, problem-solving).'
+            ? 'What are you naturally good at? This could be skills like drawing, sculpting, spatial awareness, problem-solving, or anything else.'
             : 'What comes naturally to you? Select any that resonate, even a little. You can also add your own.'}
         </p>
 
@@ -496,14 +493,6 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
             <div className="flex gap-small items-start">
               <div className="flex-1">
                 <div className="flex gap-small mb-small">
-                  <select
-                    className="input flex-1"
-                    value={talent.type}
-                    onChange={(e) => updateTalent(index, 'type', e.target.value as 'Explicit' | 'Implicit')}
-                  >
-                    <option value="Explicit">Explicit Talent</option>
-                    <option value="Implicit">Implicit Talent</option>
-                  </select>
                   <select
                     className="input flex-1"
                     value={talent.confidence}

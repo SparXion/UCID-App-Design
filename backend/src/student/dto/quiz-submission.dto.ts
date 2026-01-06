@@ -1,6 +1,5 @@
 export interface QuizSubmissionDto {
   talents: { 
-    type: string; 
     name: string; 
     measuredScore: number;
     confidence?: 'Low' | 'Medium' | 'High';

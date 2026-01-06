@@ -31,7 +31,6 @@ export class StudentProfileService {
       await prisma.talent.createMany({
         data: dto.talents.map(t => ({
           studentId,
-          type: t.type,
           name: t.name,
           measuredScore: t.measuredScore
         }))
