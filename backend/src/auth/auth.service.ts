@@ -84,7 +84,7 @@ export class AuthService {
       }
     });
 
-    if (!student) {
+    if (!student || !student.password) {
       throw new Error('Invalid email or password');
     }
 

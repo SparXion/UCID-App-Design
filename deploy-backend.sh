@@ -43,6 +43,7 @@ if [ ! -d "$BACKEND_DIR" ]; then
     exit 1
 fi
 
+# Build happens in backend directory, but deploy from root (where Dockerfile.backend is)
 cd "$BACKEND_DIR"
 
 # Step 1: Build check
@@ -84,9 +85,10 @@ else
 fi
 echo ""
 
-# Step 4: Deploy backend
+# Step 4: Deploy backend (from root directory where Dockerfile.backend is)
 echo -e "${YELLOW}Step 4: Deploying backend to Fly.io...${NC}"
 echo -e "${BLUE}This may take a few minutes...${NC}"
+cd ..  # Go back to root directory where Dockerfile.backend and fly.toml are
 if flyctl deploy --app "$APP_NAME"; then
     echo -e "${GREEN}✓ Deployment successful${NC}"
 else
@@ -114,12 +116,12 @@ echo ""
 
 # Step 6: Database migration
 echo -e "${YELLOW}Step 6: Running database migration...${NC}"
-if flyctl ssh console --app "$APP_NAME" --command "cd /app && npx prisma db push --skip-generate"; then
+if flyctl ssh console --app "$APP_NAME" --command "npx prisma db push --skip-generate"; then
     echo -e "${GREEN}✓ Database migration successful${NC}"
 else
     echo -e "${RED}✗ Database migration failed${NC}"
     echo -e "${YELLOW}You may need to run this manually:${NC}"
-    echo "  flyctl ssh console --app $APP_NAME --command 'cd /app && npx prisma db push --skip-generate'"
+    echo "  flyctl ssh console --app $APP_NAME --command 'npx prisma db push --skip-generate'"
 fi
 echo ""
 
@@ -128,7 +130,7 @@ echo -e "${YELLOW}Step 7: Seeding database...${NC}"
 read -p "Do you want to seed the database? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    if flyctl ssh console --app "$APP_NAME" --command "cd /app && npx tsx prisma/seed.ts"; then
+    if flyctl ssh console --app "$APP_NAME" --command "npx tsx prisma/seed.ts"; then
         echo -e "${GREEN}✓ Database seeded successfully${NC}"
         echo -e "${BLUE}Test credentials:${NC}"
         echo -e "  Email: ${GREEN}test@uc.edu${NC}"
@@ -136,7 +138,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     else
         echo -e "${RED}✗ Database seeding failed${NC}"
         echo -e "${YELLOW}You may need to run this manually:${NC}"
-        echo "  flyctl ssh console --app $APP_NAME --command 'cd /app && npx tsx prisma/seed.ts'"
+        echo "  flyctl ssh console --app $APP_NAME --command 'npx tsx prisma/seed.ts'"
     fi
 else
     echo -e "${YELLOW}Skipping database seed${NC}"
