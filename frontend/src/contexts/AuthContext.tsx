@@ -25,6 +25,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const signOut = () => {
+    setToken(null);
+    setStudent(null);
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_student');
+  };
+
+  const fetchCurrentUser = async (authToken: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStudent(data.student);
+        localStorage.setItem('auth_student', JSON.stringify(data.student));
+      } else {
+        // Token invalid, clear auth
+        signOut();
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user:', error);
+      signOut();
+    }
+  };
+
   // Load auth state from localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('auth_token');
@@ -45,34 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Verify token and fetch current user
   useEffect(() => {
-    if (token) {
-      fetchCurrentUser();
+    if (token && !loading) {
+      fetchCurrentUser(token);
     }
-  }, [token]);
-
-  const fetchCurrentUser = async () => {
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStudent(data.student);
-        localStorage.setItem('auth_student', JSON.stringify(data.student));
-      } else {
-        // Token invalid, clear auth
-        signOut();
-      }
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
-      signOut();
-    }
-  };
+  }, [token, loading]);
 
   const signUp = async (name: string, email: string, password: string, year?: number) => {
     try {
@@ -122,13 +127,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       throw error;
     }
-  };
-
-  const signOut = () => {
-    setToken(null);
-    setStudent(null);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_student');
   };
 
   return (

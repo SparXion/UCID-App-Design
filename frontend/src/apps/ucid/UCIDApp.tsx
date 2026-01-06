@@ -5,13 +5,24 @@ import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
 
 export function UCIDApp() {
-  const { student, token, signOut } = useAuth();
-  const studentId = student?.id || '';
+  const { student, token, signOut, loading: authLoading } = useAuth();
+  const studentId = student?.id;
   const [hasTakenQuiz, setHasTakenQuiz] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Don't render if auth is still loading or student ID is missing
+  if (authLoading || !studentId || !token) {
+    return (
+      <div className="min-h-screen bg-white p-large">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-body text-secondary">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
-    if (!studentId || !token) return;
+    if (!studentId || !token || authLoading) return;
 
     // Check if student has taken the quiz
     const checkQuizStatus = async () => {
@@ -44,7 +55,7 @@ export function UCIDApp() {
     };
 
     checkQuizStatus();
-  }, [studentId, token]);
+  }, [studentId, token, authLoading]);
 
   const handleQuizSubmit = () => {
     setHasTakenQuiz(true);
