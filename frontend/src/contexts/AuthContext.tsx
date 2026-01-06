@@ -44,13 +44,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         setStudent(data.student);
         localStorage.setItem('auth_student', JSON.stringify(data.student));
+      } else if (response.status === 401) {
+        // Token invalid or expired, clear auth
+        signOut();
       } else {
-        // Token invalid, clear auth
+        // Other errors - log but don't sign out (might be temporary)
+        console.error('Failed to fetch current user:', response.status, response.statusText);
+      }
+    } catch (error: any) {
+      // Only sign out on network errors if it's clearly an auth issue
+      // Network errors might be temporary, so we'll keep the token
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error('Network error fetching current user:', error);
+        // Don't sign out on network errors - might be temporary
+      } else {
+        console.error('Failed to fetch current user:', error);
         signOut();
       }
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
-      signOut();
     }
   };
 
@@ -90,8 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to sign up');
+        let errorMessage = 'Failed to sign up';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -100,6 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_student', JSON.stringify(data.student));
     } catch (error: any) {
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to server. Please check your connection or ensure the backend is running.');
+      }
       throw error;
     }
   };
@@ -115,8 +135,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to sign in');
+        let errorMessage = 'Failed to sign in';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -125,6 +151,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('auth_token', data.token);
       localStorage.setItem('auth_student', JSON.stringify(data.student));
     } catch (error: any) {
+      // Handle network errors
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to server. Please check your connection or ensure the backend is running.');
+      }
       throw error;
     }
   };
