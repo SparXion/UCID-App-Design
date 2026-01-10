@@ -168,4 +168,3 @@ model QuizResult {
   @@index([studentId])
   @@index([createdAt])
 }
-

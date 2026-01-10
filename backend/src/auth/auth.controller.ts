@@ -1,79 +1,205 @@
-import { Router, Request, Response } from 'express';
-import { AuthService, SignUpDto, SignInDto } from './auth.service';
+import { Router, Response } from 'express';
+import { AuthService } from './auth.service';
 import { authenticateToken, AuthRequest } from './auth.middleware';
+import { authLimiter } from '../middleware/rate-limiter';
+import { validateBody } from '../middleware/validator';
+import { signUpSchema, signInSchema, refreshTokenSchema } from '../validation/schemas';
+import { AppError } from '../middleware/error-handler';
+import { logger } from '../utils/logger';
 
 const router = Router();
 const authService = new AuthService();
 
-// Sign up
-router.post('/signup', async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/v1/auth/signup:
+ *   post:
+ *     summary: Register a new student
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 1
+ *                 maxLength: 100
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               year:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 10
+ *     responses:
+ *       201:
+ *         description: Student created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *                 student:
+ *                   type: object
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: Email already registered
+ */
+router.post('/signup', authLimiter, validateBody(signUpSchema), async (req, res: Response, next) => {
   try {
-    const dto: SignUpDto = req.body;
-
-    // Validate required fields
-    if (!dto.name || !dto.email || !dto.password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(dto.email)) {
-      return res.status(400).json({ error: 'Invalid email format' });
-    }
-
-    // Validate password length
-    if (dto.password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-
-    const result = await authService.signUp(dto);
+    const result = await authService.signUp(req.body);
+    logger.info('User signed up', { email: req.body.email });
     res.status(201).json(result);
   } catch (error: any) {
-    console.error('[Sign Up] Error:', error);
     if (error.message === 'Email already registered') {
-      return res.status(409).json({ error: error.message });
+      throw new AppError(409, error.message, 'EMAIL_ALREADY_EXISTS');
     }
-    res.status(500).json({ error: 'Failed to create account' });
+    next(error);
   }
 });
 
-// Sign in
-router.post('/signin', async (req: Request, res: Response) => {
+/**
+ * @swagger
+ * /api/v1/auth/signin:
+ *   post:
+ *     summary: Sign in with email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Sign in successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *                 student:
+ *                   type: object
+ *       401:
+ *         description: Invalid credentials
+ */
+router.post('/signin', authLimiter, validateBody(signInSchema), async (req, res: Response, next) => {
   try {
-    const dto: SignInDto = req.body;
-
-    // Validate required fields
-    if (!dto.email || !dto.password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    const result = await authService.signIn(dto);
+    const result = await authService.signIn(req.body);
+    logger.info('User signed in', { email: req.body.email });
     res.json(result);
   } catch (error: any) {
-    console.error('[Sign In] Error:', error);
     if (error.message === 'Invalid email or password') {
-      return res.status(401).json({ error: error.message });
+      throw new AppError(401, error.message, 'INVALID_CREDENTIALS');
     }
-    res.status(500).json({ error: 'Failed to sign in' });
+    next(error);
   }
 });
 
-// Get current user (protected route)
-router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
+/**
+ * @swagger
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: Refresh access token using refresh token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+router.post('/refresh', authLimiter, validateBody(refreshTokenSchema), async (req, res: Response, next) => {
+  try {
+    const result = await authService.refreshToken(req.body.refreshToken);
+    logger.info('Token refreshed', { studentId: req.body.refreshToken });
+    res.json(result);
+  } catch (error: any) {
+    throw new AppError(401, error.message, 'INVALID_REFRESH_TOKEN');
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/me:
+ *   get:
+ *     summary: Get current authenticated user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 student:
+ *                   type: object
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Student not found
+ */
+router.get('/me', authenticateToken, async (req: AuthRequest, res: Response, next) => {
   try {
     const studentId = req.studentId!;
     const student = await authService.getStudentById(studentId);
 
     if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+      throw new AppError(404, 'Student not found', 'STUDENT_NOT_FOUND');
     }
 
     res.json({ student });
-  } catch (error: any) {
-    console.error('[Get Me] Error:', error);
-    res.status(500).json({ error: 'Failed to get user information' });
+  } catch (error) {
+    next(error);
   }
 });
 
 export default router;
-

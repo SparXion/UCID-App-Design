@@ -51,8 +51,10 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
       })
       .then(data => {
         console.log('Fetched career paths:', data);
-        if (Array.isArray(data) && data.length > 0) {
-          setPaths(data);
+        // Handle paginated response (new format) or array response (old format)
+        const pathsData = data.data || data;
+        if (Array.isArray(pathsData) && pathsData.length > 0) {
+          setPaths(pathsData);
         } else {
           console.warn('Received empty or invalid data:', data);
           setPaths([]);
@@ -71,8 +73,10 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
           })
           .then(data => {
             console.log('Fetched career paths (direct):', data);
-            if (Array.isArray(data) && data.length > 0) {
-              setPaths(data);
+            // Handle paginated response (new format) or array response (old format)
+            const pathsData = data.data || data;
+            if (Array.isArray(pathsData) && pathsData.length > 0) {
+              setPaths(pathsData);
             } else {
               setPaths([]);
             }

@@ -11,10 +11,12 @@ interface Student {
 interface AuthContextType {
   student: Student | null;
   token: string | null;
+  refreshToken: string | null;
   loading: boolean;
   signUp: (name: string, email: string, password: string, year?: number) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => void;
+  refreshAccessToken: () => Promise<boolean>;
   isAuthenticated: boolean;
 }
 
@@ -23,13 +25,50 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [student, setStudent] = useState<Student | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const signOut = () => {
     setToken(null);
+    setRefreshToken(null);
     setStudent(null);
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_refresh_token');
     localStorage.removeItem('auth_student');
+  };
+
+  const refreshAccessToken = async (): Promise<boolean> => {
+    const storedRefreshToken = refreshToken || localStorage.getItem('auth_refresh_token');
+    
+    if (!storedRefreshToken) {
+      signOut();
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refreshToken: storedRefreshToken })
+      });
+
+      if (!response.ok) {
+        // Refresh token invalid or expired
+        signOut();
+        return false;
+      }
+
+      const data = await response.json();
+      setToken(data.token);
+      localStorage.setItem('auth_token', data.token);
+      return true;
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      signOut();
+      return false;
+    }
   };
 
   const fetchCurrentUser = async (authToken: string) => {
@@ -45,7 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setStudent(data.student);
         localStorage.setItem('auth_student', JSON.stringify(data.student));
       } else if (response.status === 401) {
-        // Token invalid or expired, clear auth
+        // Token invalid or expired, try to refresh
+        const refreshed = await refreshAccessToken();
+        if (refreshed && token) {
+          // Retry with new token
+          return fetchCurrentUser(token);
+        }
         signOut();
       } else {
         // Other errors - log but don't sign out (might be temporary)
@@ -67,15 +111,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Load auth state from localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('auth_token');
+    const storedRefreshToken = localStorage.getItem('auth_refresh_token');
     const storedStudent = localStorage.getItem('auth_student');
 
     if (storedToken && storedStudent) {
       setToken(storedToken);
+      if (storedRefreshToken) {
+        setRefreshToken(storedRefreshToken);
+      }
       try {
         setStudent(JSON.parse(storedStudent));
       } catch (e) {
         console.error('Failed to parse stored student:', e);
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_refresh_token');
         localStorage.removeItem('auth_student');
       }
     }
@@ -103,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let errorMessage = 'Failed to sign up';
         try {
           const error = await response.json();
-          errorMessage = error.error || errorMessage;
+          errorMessage = error.error?.message || error.error || errorMessage;
         } catch {
           errorMessage = `Server error: ${response.status} ${response.statusText}`;
         }
@@ -112,8 +161,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       setToken(data.token);
+      setRefreshToken(data.refreshToken);
       setStudent(data.student);
       localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('auth_refresh_token', data.refreshToken);
       localStorage.setItem('auth_student', JSON.stringify(data.student));
     } catch (error: any) {
       // Handle network errors
@@ -138,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let errorMessage = 'Failed to sign in';
         try {
           const error = await response.json();
-          errorMessage = error.error || errorMessage;
+          errorMessage = error.error?.message || error.error || errorMessage;
         } catch {
           errorMessage = `Server error: ${response.status} ${response.statusText}`;
         }
@@ -147,8 +198,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       setToken(data.token);
+      setRefreshToken(data.refreshToken);
       setStudent(data.student);
       localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('auth_refresh_token', data.refreshToken);
       localStorage.setItem('auth_student', JSON.stringify(data.student));
     } catch (error: any) {
       // Handle network errors
@@ -164,10 +217,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         student,
         token,
+        refreshToken,
         loading,
         signUp,
         signIn,
         signOut,
+        refreshAccessToken,
         isAuthenticated: !!student && !!token
       }}
     >
@@ -183,4 +238,3 @@ export function useAuth() {
   }
   return context;
 }
-

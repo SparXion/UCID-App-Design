@@ -4,10 +4,15 @@ import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-key-change-in-production');
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-refresh-secret-key-change-in-production');
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'; // Short-lived access token
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'; // Long-lived refresh token
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required in production');
+}
+if (!JWT_REFRESH_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET environment variable is required in production');
 }
 
 export interface SignUpDto {
@@ -24,12 +29,17 @@ export interface SignInDto {
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;
   student: {
     id: string;
     name: string;
     email: string;
     year?: number;
   };
+}
+
+export interface RefreshTokenResponse {
+  token: string;
 }
 
 export class AuthService {
@@ -57,11 +67,13 @@ export class AuthService {
       }
     });
 
-    // Generate JWT token
+    // Generate tokens
     const token = this.generateToken(student.id);
+    const refreshToken = this.generateRefreshToken(student.id);
 
     return {
       token,
+      refreshToken,
       student: {
         id: student.id,
         name: student.name,
@@ -94,11 +106,13 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    // Generate JWT token
+    // Generate tokens
     const token = this.generateToken(student.id);
+    const refreshToken = this.generateRefreshToken(student.id);
 
     return {
       token,
+      refreshToken,
       student: {
         id: student.id,
         name: student.name,
@@ -106,6 +120,32 @@ export class AuthService {
         year: student.year || undefined
       }
     };
+  }
+
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    try {
+      const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+      if (typeof decoded === 'object' && decoded !== null && 'studentId' in decoded) {
+        const studentId = (decoded as { studentId: string }).studentId;
+        
+        // Verify student still exists
+        const student = await prisma.student.findUnique({
+          where: { id: studentId },
+          select: { id: true }
+        });
+
+        if (!student) {
+          throw new Error('Student not found');
+        }
+
+        // Generate new access token
+        const token = this.generateToken(studentId);
+        return { token };
+      }
+      throw new Error('Invalid refresh token');
+    } catch (error) {
+      throw new Error('Invalid or expired refresh token');
+    }
   }
 
   async getStudentById(studentId: string) {
@@ -131,6 +171,14 @@ export class AuthService {
     );
   }
 
+  generateRefreshToken(studentId: string): string {
+    return jwt.sign(
+      { studentId },
+      JWT_REFRESH_SECRET,
+      { expiresIn: JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions
+    );
+  }
+
   verifyToken(token: string): { studentId: string } {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
@@ -143,4 +191,3 @@ export class AuthService {
     }
   }
 }
-
