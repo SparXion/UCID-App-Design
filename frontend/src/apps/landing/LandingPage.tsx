@@ -17,12 +17,18 @@ export function LandingPage() {
 
         {/* CTA Buttons - positioned below the SVG with proper spacing */}
         <div className="flex gap-medium justify-center items-center flex-wrap mt-large">
-                <Link 
-                    to="/signin" 
-                    className="btn text-body px-xlarge py-medium inline-block bg-white border-bold border-black hover:bg-black hover:text-white transition-standard"
-                  >
-                    Explore UCID App →
-                  </Link>
+          <a 
+            href="mailto:john@sparxion.com"
+            className="btn text-body px-xlarge py-medium inline-block bg-white border-bold border-black hover:bg-black hover:text-white transition-standard"
+          >
+            Contact →
+          </a>
+          <Link 
+            to="/signin" 
+            className="btn text-body px-xlarge py-medium inline-block bg-white border-bold border-black hover:bg-black hover:text-white transition-standard"
+          >
+            Explore UCID App →
+          </Link>
           <a 
             href="https://aitunerapp.com" 
             target="_blank" 
