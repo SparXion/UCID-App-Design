@@ -10,8 +10,8 @@ export function LandingPage() {
           <img 
             src={SparxionLanding} 
             alt="SparXion - connecting humans with ai" 
-            className="w-full max-w-5xl h-auto"
-            style={{ minHeight: '500px', objectFit: 'contain' }}
+            className="w-full max-w-7xl h-auto"
+            style={{ minHeight: '625px', objectFit: 'contain' }}
           />
         </div>
 
