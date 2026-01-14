@@ -73,7 +73,7 @@ router.post('/prompts', optionalAuth, validateBody(promptSchema), async (req: Au
 });
 
 // KPI summary (admin)
-router.get('/analytics/kpis', authenticateToken, validateQuery(analyticsQuerySchema), async (req: AuthRequest, res: Response, next) => {
+router.get('/analytics/kpis', optionalAuth, validateQuery(analyticsQuerySchema), async (req: AuthRequest, res: Response, next) => {
   try {
     requireAdmin(req);
     const start = req.query.start ? new Date(req.query.start as string) : undefined;
@@ -86,7 +86,7 @@ router.get('/analytics/kpis', authenticateToken, validateQuery(analyticsQuerySch
 });
 
 // CSV export (admin)
-router.get('/analytics/export', authenticateToken, validateQuery(analyticsQuerySchema), async (req: AuthRequest, res: Response, next) => {
+router.get('/analytics/export', optionalAuth, validateQuery(analyticsQuerySchema), async (req: AuthRequest, res: Response, next) => {
   try {
     requireAdmin(req);
     const type = (req.query.type as string) || 'events';

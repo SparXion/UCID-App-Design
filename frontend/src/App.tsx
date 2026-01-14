@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { LandingPage } from './apps/landing/LandingPage';
 import { UCIDApp } from './apps/ucid/UCIDApp';
+import { AdminAnalytics } from './apps/ucid/AdminAnalytics';
 import { SignIn } from './components/auth/SignIn';
 import { SignUp } from './components/auth/SignUp';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -28,6 +29,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <UCIDApp />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute>
+                <AdminAnalytics />
               </ProtectedRoute>
             }
           />
