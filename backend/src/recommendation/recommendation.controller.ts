@@ -7,9 +7,16 @@ import { parsePagination, createPaginationResult } from '../utils/pagination';
 import { validateQuery } from '../middleware/validator';
 import { paginationSchema } from '../validation/schemas';
 import { logger } from '../utils/logger';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 const router = Router();
 const recommendationService = new RecommendationService();
+const analyticsService = new AnalyticsService();
+
+const getSessionId = (req: AuthRequest) => {
+  const headerId = req.headers['x-session-id'];
+  return typeof headerId === 'string' ? headerId : undefined;
+};
 
 // All recommendation routes require authentication
 router.use(authenticateToken);
@@ -108,6 +115,16 @@ router.get('/students/:id/paths', validateQuery(paginationSchema), async (req: A
     const paginatedData = paths.slice(startIndex, endIndex);
     
     res.set('Cache-Control', 'public, max-age=3600'); // HTTP cache header
+    await analyticsService.trackEvent({
+      studentId: id,
+      sessionId: getSessionId(req),
+      name: 'recommendations_viewed',
+      properties: {
+        total: paths.length,
+        page,
+        limit
+      }
+    });
     res.json(createPaginationResult(
       paginatedData,
       paths.length,

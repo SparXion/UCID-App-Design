@@ -1,9 +1,16 @@
 import { Router, Response } from 'express';
 import { QuizResultService, SaveQuizResultDto } from './quiz-result.service';
 import { authenticateToken, AuthRequest } from '../auth/auth.middleware';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 const router = Router();
 const quizResultService = new QuizResultService();
+const analyticsService = new AnalyticsService();
+
+const getSessionId = (req: AuthRequest) => {
+  const headerId = req.headers['x-session-id'];
+  return typeof headerId === 'string' ? headerId : undefined;
+};
 
 // All routes require authentication
 router.use(authenticateToken);
@@ -19,6 +26,11 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     }
     
     const result = await quizResultService.saveQuizResult(studentId, dto);
+    await analyticsService.trackEvent({
+      studentId,
+      sessionId: getSessionId(req),
+      name: 'results_saved'
+    });
     res.status(201).json(result);
   } catch (error: any) {
     console.error('[Save Quiz Result] Error:', error);

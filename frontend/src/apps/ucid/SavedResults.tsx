@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { getSessionId } from '../../utils/analytics';
 import { Calendar, Trash2, Eye } from 'lucide-react';
 
 interface CareerPath {
@@ -37,6 +38,7 @@ export function SavedResults({ studentId }: { studentId: string }) {
     const fetchResults = async () => {
       try {
         const headers: HeadersInit = {
+        'x-session-id': getSessionId(),
           'Authorization': `Bearer ${token}`
         };
 
@@ -66,6 +68,7 @@ export function SavedResults({ studentId }: { studentId: string }) {
     setDeleting(resultId);
     try {
       const headers: HeadersInit = {
+        'x-session-id': getSessionId(),
         'Authorization': `Bearer ${token}`
       };
 

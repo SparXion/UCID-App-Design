@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Briefcase, CheckCircle, Save } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { submitSurvey, submitPrompt } from '../../utils/analytics';
+import { getSessionId } from '../../utils/analytics';
 
 interface CareerPath {
   id: string;
@@ -29,6 +31,19 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [postSurveySubmitted, setPostSurveySubmitted] = useState(() => localStorage.getItem('ucid_post_survey_done') === 'true');
+  const [postSurvey, setPostSurvey] = useState({
+    usefulness: '',
+    confidence: '',
+    clarity: '',
+    notes: ''
+  });
+  const [promptSubmitted, setPromptSubmitted] = useState(() => localStorage.getItem('ucid_prompt_recs_done') === 'true');
+  const [promptRating, setPromptRating] = useState('');
+  const [promptText, setPromptText] = useState('');
+  const [savePromptSubmitted, setSavePromptSubmitted] = useState(() => localStorage.getItem('ucid_prompt_save_done') === 'true');
+  const [savePromptRating, setSavePromptRating] = useState('');
+  const [savePromptText, setSavePromptText] = useState('');
 
   useEffect(() => {
     if (!studentId || !token) return;
@@ -90,6 +105,36 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
       });
   }, [studentId, token]);
 
+  const handlePostSurveySubmit = async () => {
+    if (!postSurvey.usefulness || !postSurvey.confidence || !postSurvey.clarity) {
+      alert('Please answer all post-survey questions.');
+      return;
+    }
+    await submitSurvey('POST', postSurvey, token || undefined);
+    localStorage.setItem('ucid_post_survey_done', 'true');
+    setPostSurveySubmitted(true);
+  };
+
+  const handlePromptSubmit = async () => {
+    if (!promptRating) {
+      alert('Please provide a rating.');
+      return;
+    }
+    await submitPrompt('recommendations_usefulness', parseInt(promptRating, 10), promptText, token || undefined);
+    localStorage.setItem('ucid_prompt_recs_done', 'true');
+    setPromptSubmitted(true);
+  };
+
+  const handleSavePromptSubmit = async () => {
+    if (!savePromptRating) {
+      alert('Please provide a rating.');
+      return;
+    }
+    await submitPrompt('save_results_feedback', parseInt(savePromptRating, 10), savePromptText, token || undefined);
+    localStorage.setItem('ucid_prompt_save_done', 'true');
+    setSavePromptSubmitted(true);
+  };
+
   const handleSaveResults = async () => {
     if (!studentId || !token || paths.length === 0) return;
 
@@ -97,6 +142,7 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
     try {
       // Fetch current student data (talents, interests, hybridMode)
       const studentHeaders: HeadersInit = {
+        'x-session-id': getSessionId(),
         'Authorization': `Bearer ${token}`
       };
 
@@ -121,6 +167,7 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
       // Save the result
       const saveHeaders: HeadersInit = {
         'Content-Type': 'application/json',
+        'x-session-id': getSessionId(),
         'Authorization': `Bearer ${token}`
       };
 
@@ -208,6 +255,103 @@ export function SkillTreeExplorer({ studentId }: { studentId: string }) {
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Results'}
         </button>
       </div>
+      {saved && !savePromptSubmitted && (
+        <div className="card mb-small">
+          <h3 className="text-h3 mb-small">Quick Check-in</h3>
+          <p className="text-small text-secondary mb-small">Would you save results like this again? (1-5)</p>
+          <select
+            className="input mb-small"
+            value={savePromptRating}
+            onChange={(e) => setSavePromptRating(e.target.value)}
+          >
+            <option value="">Select</option>
+            {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <textarea
+            className="input mb-small"
+            placeholder="Optional: What would make saving more useful?"
+            value={savePromptText}
+            onChange={(e) => setSavePromptText(e.target.value)}
+          />
+          <button className="btn btn-primary" onClick={handleSavePromptSubmit}>Submit</button>
+        </div>
+      )}
+
+      {!promptSubmitted && (
+        <div className="card mb-large">
+          <h3 className="text-h3 mb-small">Quick Feedback</h3>
+          <p className="text-small text-secondary mb-small">How useful were these recommendations? (1-5)</p>
+          <select
+            className="input mb-small"
+            value={promptRating}
+            onChange={(e) => setPromptRating(e.target.value)}
+          >
+            <option value="">Select</option>
+            {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <textarea
+            className="input mb-small"
+            placeholder="Optional: What stood out?"
+            value={promptText}
+            onChange={(e) => setPromptText(e.target.value)}
+          />
+          <button className="btn btn-primary" onClick={handlePromptSubmit}>Submit</button>
+        </div>
+      )}
+
+      {!postSurveySubmitted && (
+        <div className="card mb-large">
+          <h3 className="text-h3 mb-small">Post-Survey</h3>
+          <p className="text-small text-secondary mb-small">Help us measure impact after viewing results.</p>
+          <div className="grid gap-small">
+            <label className="text-small">
+              How useful were the recommendations? (1-5)
+              <select
+                className="input mt-tiny"
+                value={postSurvey.usefulness}
+                onChange={(e) => setPostSurvey({ ...postSurvey, usefulness: e.target.value })}
+              >
+                <option value="">Select</option>
+                {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+            <label className="text-small">
+              How confident are you in your direction now? (1-5)
+              <select
+                className="input mt-tiny"
+                value={postSurvey.confidence}
+                onChange={(e) => setPostSurvey({ ...postSurvey, confidence: e.target.value })}
+              >
+                <option value="">Select</option>
+                {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+            <label className="text-small">
+              How clear are your next steps now? (1-5)
+              <select
+                className="input mt-tiny"
+                value={postSurvey.clarity}
+                onChange={(e) => setPostSurvey({ ...postSurvey, clarity: e.target.value })}
+              >
+                <option value="">Select</option>
+                {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+            <label className="text-small">
+              Any feedback on the recommendations?
+              <textarea
+                className="input mt-tiny"
+                value={postSurvey.notes}
+                onChange={(e) => setPostSurvey({ ...postSurvey, notes: e.target.value })}
+              />
+            </label>
+            <button className="btn btn-primary" onClick={handlePostSurveySubmit}>
+              Submit Post-Survey
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-medium">
       {paths.map(path => (
         <div

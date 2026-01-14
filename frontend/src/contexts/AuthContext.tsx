@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { API_BASE_URL } from '../config';
+import { getSessionId } from '../utils/analytics';
 
 interface Student {
   id: string;
@@ -49,7 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-session-id': getSessionId()
         },
         body: JSON.stringify({ refreshToken: storedRefreshToken })
       });
@@ -143,7 +145,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-session-id': getSessionId()
         },
         body: JSON.stringify({ name, email, password, year })
       });
@@ -180,7 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/signin`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-session-id': getSessionId()
         },
         body: JSON.stringify({ email, password })
       });

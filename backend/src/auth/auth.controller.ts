@@ -6,9 +6,16 @@ import { validateBody } from '../middleware/validator';
 import { signUpSchema, signInSchema, refreshTokenSchema } from '../validation/schemas';
 import { AppError } from '../middleware/error-handler';
 import { logger } from '../utils/logger';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 const router = Router();
 const authService = new AuthService();
+const analyticsService = new AnalyticsService();
+
+const getSessionId = (req: AuthRequest) => {
+  const headerId = req.headers['x-session-id'];
+  return typeof headerId === 'string' ? headerId : undefined;
+};
 
 /**
  * @swagger
@@ -64,6 +71,11 @@ router.post('/signup', authLimiter, validateBody(signUpSchema), async (req, res:
   try {
     const result = await authService.signUp(req.body);
     logger.info('User signed up', { email: req.body.email });
+    await analyticsService.trackEvent({
+      studentId: result.student.id,
+      sessionId: getSessionId(req),
+      name: 'signup'
+    });
     res.status(201).json(result);
   } catch (error: any) {
     if (error.message === 'Email already registered') {

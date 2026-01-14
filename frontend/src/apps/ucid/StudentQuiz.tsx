@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Pencil, Sparkles, Code, Settings, Lightbulb, Link2, Star } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { submitSurvey } from '../../utils/analytics';
+import { getSessionId } from '../../utils/analytics';
 
 type InputMode = 'direct' | 'explore';
 type Confidence = 'Low' | 'Medium' | 'High';
@@ -233,6 +235,13 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
   const [interests, setInterests] = useState<Interest[]>([]);
   const [hybridMode, setHybridMode] = useState<HybridMode | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [preSurveySubmitted, setPreSurveySubmitted] = useState(() => localStorage.getItem('ucid_pre_survey_done') === 'true');
+  const [preSurvey, setPreSurvey] = useState({
+    awareness: '',
+    confidence: '',
+    clarity: '',
+    notes: ''
+  });
   const [showTalentExamples, setShowTalentExamples] = useState(false);
   const [showInterestExamples, setShowInterestExamples] = useState(false);
 
@@ -310,6 +319,16 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
     return EVERYDAY_TO_ID_MAPPING[topic] || [];
   };
 
+  const handlePreSurveySubmit = async () => {
+    if (!preSurvey.awareness || !preSurvey.confidence || !preSurvey.clarity) {
+      alert('Please answer all pre-survey questions.');
+      return;
+    }
+    await submitSurvey('PRE', preSurvey, token || undefined);
+    localStorage.setItem('ucid_pre_survey_done', 'true');
+    setPreSurveySubmitted(true);
+  };
+
   const handleSubmit = async () => {
     // Validate - allow partial completion
     const validTalents = talents.filter(t => t.name.trim());
@@ -344,6 +363,7 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
 
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
+        'x-session-id': getSessionId(),
         ...(token && { 'Authorization': `Bearer ${token}` })
       };
 
@@ -445,6 +465,59 @@ export function StudentQuiz({ studentId, onSubmit }: StudentQuizProps) {
           Change Mode
         </button>
       </div>
+
+      {!preSurveySubmitted && (
+        <div className="card mb-large">
+          <h3 className="text-h3 mb-small">Quick Pre-Survey</h3>
+          <p className="text-small text-secondary mb-small">Help us understand where you're starting.</p>
+          <div className="grid gap-small">
+            <label className="text-small">
+              How aware are you of design career options? (1-5)
+              <select
+                className="input mt-tiny"
+                value={preSurvey.awareness}
+                onChange={(e) => setPreSurvey({ ...preSurvey, awareness: e.target.value })}
+              >
+                <option value="">Select</option>
+                {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+            <label className="text-small">
+              How confident are you in your current direction? (1-5)
+              <select
+                className="input mt-tiny"
+                value={preSurvey.confidence}
+                onChange={(e) => setPreSurvey({ ...preSurvey, confidence: e.target.value })}
+              >
+                <option value="">Select</option>
+                {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+            <label className="text-small">
+              How clear are you on next steps? (1-5)
+              <select
+                className="input mt-tiny"
+                value={preSurvey.clarity}
+                onChange={(e) => setPreSurvey({ ...preSurvey, clarity: e.target.value })}
+              >
+                <option value="">Select</option>
+                {[1,2,3,4,5].map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </label>
+            <label className="text-small">
+              Anything else you'd like us to know?
+              <textarea
+                className="input mt-tiny"
+                value={preSurvey.notes}
+                onChange={(e) => setPreSurvey({ ...preSurvey, notes: e.target.value })}
+              />
+            </label>
+            <button className="btn btn-primary" onClick={handlePreSurveySubmit}>
+              Submit Pre-Survey
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Talents Section */}
       <div className="mb-large">

@@ -22,6 +22,9 @@ model Student {
   talents       Talent[]
   skillProgress SkillProgress[]
   quizResults   QuizResult[]    // Saved quiz results
+  events        Event[]
+  surveyResponses SurveyResponse[]
+  promptResponses PromptResponse[]
   embedding     String?         // Store as JSON string, nullable for new users
   hybridMode    String?         // DIRECT_CREATOR | AI_CURATOR | SYSTEM_ARCHITECT | DESIGN_EXECUTOR
   createdAt      DateTime        @default(now())
@@ -166,5 +169,46 @@ model QuizResult {
   createdAt     DateTime  @default(now())
   
   @@index([studentId])
+  @@index([createdAt])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  studentId   String?
+  student     Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  sessionId   String?
+  name        String
+  properties  Json?
+  createdAt   DateTime @default(now())
+
+  @@index([studentId])
+  @@index([name])
+  @@index([createdAt])
+}
+
+model SurveyResponse {
+  id         String   @id @default(cuid())
+  studentId  String?
+  student    Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  type       String   // PRE | POST
+  responses  Json
+  createdAt  DateTime @default(now())
+
+  @@index([studentId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PromptResponse {
+  id           String   @id @default(cuid())
+  studentId    String?
+  student      Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  promptKey    String
+  rating       Int?
+  responseText String?
+  createdAt    DateTime @default(now())
+
+  @@index([studentId])
+  @@index([promptKey])
   @@index([createdAt])
 }

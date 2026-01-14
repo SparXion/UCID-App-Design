@@ -9,10 +9,17 @@ import { quizSubmissionSchema } from '../validation/schemas';
 import { AppError } from '../middleware/error-handler';
 import { cache, cacheKeys } from '../utils/cache';
 import { logger } from '../utils/logger';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 const router = Router();
 const studentService = new StudentProfileService();
 const prisma = new PrismaClient();
+const analyticsService = new AnalyticsService();
+
+const getSessionId = (req: AuthRequest) => {
+  const headerId = req.headers['x-session-id'];
+  return typeof headerId === 'string' ? headerId : undefined;
+};
 
 // All student routes require authentication
 router.use(authenticateToken);
@@ -91,6 +98,17 @@ router.post('/:id/quiz', quizLimiter, validateBody(quizSubmissionSchema), async 
     // Invalidate cache for this student's recommendations
     cache.delete(cacheKeys.studentRecommendations(id));
     cache.delete(cacheKeys.studentProfile(id));
+    
+    await analyticsService.trackEvent({
+      studentId: id,
+      sessionId: getSessionId(req),
+      name: 'quiz_complete',
+      properties: {
+        talentsCount: dto.talents?.length || 0,
+        interestsCount: dto.interests?.length || 0,
+        hybridMode: dto.hybridMode || null
+      }
+    });
     
     logger.info('Quiz submission successful', { studentId: id });
     res.json({ success: true });

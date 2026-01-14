@@ -120,3 +120,10 @@ for i in {1..6}; do
     -d '{"email":"test@test.com","password":"wrong"}'
 done
 ```
+
+# Optional (Analytics Admin Access)
+
+```env
+# If set, analytics export/KPI endpoints require this header: x-admin-key
+ADMIN_KEY=<generate-a-secure-random-string>
+```

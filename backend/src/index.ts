@@ -5,6 +5,7 @@ import authRoutes from './auth/auth.controller';
 import studentRoutes from './student/student.controller';
 import recommendationRoutes from './recommendation/recommendation.controller';
 import quizResultRoutes from './quiz-result/quiz-result.controller';
+import analyticsRoutes from './analytics/analytics.controller';
 import { errorHandler } from './middleware/error-handler';
 import { apiLimiter } from './middleware/rate-limiter';
 import { logger } from './utils/logger';
@@ -122,6 +123,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/recommendations', recommendationRoutes);
 app.use('/api/v1/quiz-results', quizResultRoutes);
+app.use('/api/v1', analyticsRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
