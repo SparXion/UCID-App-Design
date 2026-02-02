@@ -5,7 +5,7 @@ import { UCIDApp } from './apps/ucid/UCIDApp';
 import { AdminAnalytics } from './apps/ucid/AdminAnalytics';
 import { SignIn } from './components/auth/SignIn';
 import { SignUp } from './components/auth/SignUp';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
 import './styles/globals.css';
 
 function App() {
@@ -32,12 +32,21 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Direct admin access for john.mark.violette@icloud.com */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminAnalytics />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/admin/analytics"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <AdminAnalytics />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
         </Routes>
