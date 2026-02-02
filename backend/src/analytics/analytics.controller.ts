@@ -104,4 +104,15 @@ router.get('/analytics/export', optionalAuth, validateQuery(analyticsQuerySchema
   }
 });
 
+// List all students with quiz status (admin)
+router.get('/analytics/students', optionalAuth, async (req: AuthRequest, res: Response, next) => {
+  try {
+    requireAdmin(req);
+    const students = await analyticsService.getStudentsList();
+    res.json(students);
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

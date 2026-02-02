@@ -17,6 +17,21 @@ interface KpiResponse {
   prompts: number;
 }
 
+interface StudentInfo {
+  id: string;
+  name: string;
+  email: string;
+  year: number | null;
+  createdAt: string;
+  updatedAt: string;
+  hasTakenQuiz: boolean;
+  quizCount: number;
+  interestsCount: number;
+  talentsCount: number;
+  surveysCount: number;
+  eventsCount: number;
+}
+
 const getStoredAdminKey = () => localStorage.getItem('ucid_admin_key') || '';
 
 export function AdminAnalytics() {
@@ -26,6 +41,8 @@ export function AdminAnalytics() {
   const [end, setEnd] = useState('');
   const [kpis, setKpis] = useState<KpiResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [students, setStudents] = useState<StudentInfo[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const headers = useMemo(() => {
@@ -61,6 +78,25 @@ export function AdminAnalytics() {
       setError(err.message || 'Failed to load KPIs');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStudents = async () => {
+    setLoadingStudents(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/analytics/students`, {
+        headers
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to load students: ${response.status}`);
+      }
+      const data = await response.json();
+      setStudents(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load students');
+    } finally {
+      setLoadingStudents(false);
     }
   };
 
@@ -168,6 +204,58 @@ export function AdminAnalytics() {
             </div>
           </div>
         )}
+
+        <div className="card mb-medium">
+          <h2 className="text-h3 mb-small">Students List</h2>
+          <button className="btn btn-primary mb-small" onClick={fetchStudents} disabled={loadingStudents}>
+            {loadingStudents ? 'Loading...' : 'Load Students'}
+          </button>
+          {students.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-small">
+                <thead>
+                  <tr className="border-b-2 border-black">
+                    <th className="text-left p-small">Name</th>
+                    <th className="text-left p-small">Email</th>
+                    <th className="text-left p-small">Year</th>
+                    <th className="text-left p-small">Quiz Taken</th>
+                    <th className="text-left p-small">Quizzes</th>
+                    <th className="text-left p-small">Interests</th>
+                    <th className="text-left p-small">Talents</th>
+                    <th className="text-left p-small">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student) => (
+                    <tr key={student.id} className="border-b border-gray-300">
+                      <td className="p-small">{student.name}</td>
+                      <td className="p-small font-mono text-xs">{student.email}</td>
+                      <td className="p-small">{student.year || '-'}</td>
+                      <td className="p-small">
+                        {student.hasTakenQuiz ? (
+                          <span className="text-green-600">✓ Yes</span>
+                        ) : (
+                          <span className="text-gray-400">No</span>
+                        )}
+                      </td>
+                      <td className="p-small">{student.quizCount}</td>
+                      <td className="p-small">{student.interestsCount}</td>
+                      <td className="p-small">{student.talentsCount}</td>
+                      <td className="p-small text-xs">
+                        {new Date(student.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="mt-small text-small text-secondary">
+                Total: {students.length} students | 
+                Taken Quiz: {students.filter(s => s.hasTakenQuiz).length} | 
+                No Quiz: {students.filter(s => !s.hasTakenQuiz).length}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="card">
           <h2 className="text-h3 mb-small">Exports</h2>

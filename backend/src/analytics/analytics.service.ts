@@ -150,6 +150,44 @@ export class AnalyticsService {
     })));
   }
 
+  async getStudentsList() {
+    const students = await prisma.student.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        year: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            quizResults: true,
+            interests: true,
+            talents: true,
+            surveyResponses: true,
+            events: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return students.map(s => ({
+      id: s.id,
+      name: s.name,
+      email: s.email,
+      year: s.year,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+      hasTakenQuiz: s._count.quizResults > 0,
+      quizCount: s._count.quizResults,
+      interestsCount: s._count.interests,
+      talentsCount: s._count.talents,
+      surveysCount: s._count.surveyResponses,
+      eventsCount: s._count.events
+    }));
+  }
+
   private toCsv(headers: string[], rows: Record<string, any>[]) {
     const escape = (value: any) => {
       const str = value === null || value === undefined ? '' : String(value);
