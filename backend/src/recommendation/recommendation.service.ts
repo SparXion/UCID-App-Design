@@ -93,6 +93,25 @@ export class RecommendationService {
     studentTalents.forEach(talent => studentSkillsSet.add(talent));
     const studentSkills = Array.from(studentSkillsSet);
 
+    // EXACT PHRASE MATCHING: Check for explicit career interests with higher weight
+    // These are phrases that indicate a specific career interest
+    const exactPhrases: Array<{ phrase: string; subfield: string; industry?: string; weight: number }> = [
+      { phrase: 'car design', subfield: 'Transportation Design', industry: 'Automotive', weight: 2.0 },
+      { phrase: 'automotive design', subfield: 'Transportation Design', industry: 'Automotive', weight: 2.0 },
+      { phrase: 'vehicle design', subfield: 'Transportation Design', industry: 'Automotive', weight: 2.0 },
+      { phrase: 'transportation design', subfield: 'Transportation Design', industry: 'Automotive', weight: 2.0 },
+      { phrase: 'footwear design', subfield: 'Footwear Design', industry: 'Consumer Products', weight: 2.0 },
+      { phrase: 'shoe design', subfield: 'Footwear Design', industry: 'Consumer Products', weight: 2.0 },
+      { phrase: 'furniture design', subfield: 'Furniture Design', industry: 'Consumer Products', weight: 2.0 },
+      { phrase: 'toy design', subfield: 'Toy Design', industry: 'Toy & Game Design', weight: 2.0 },
+      { phrase: 'medical device design', subfield: 'Medical Device Design', industry: 'Medical Devices', weight: 2.0 },
+      { phrase: 'packaging design', subfield: 'Packaging Design', industry: 'Consumer Products', weight: 2.0 },
+      { phrase: 'lighting design', subfield: 'Lighting Design', industry: 'Consumer Products', weight: 2.0 },
+      { phrase: 'tool design', subfield: 'Tool Design', industry: 'Consumer Products', weight: 2.0 },
+      { phrase: 'sports equipment design', subfield: 'Sports Equipment Design', industry: 'Sports Equipment', weight: 2.0 },
+      { phrase: 'outdoor equipment design', subfield: 'Outdoor Equipment Design', industry: 'Outdoor Products', weight: 2.0 },
+    ];
+
     return skillTrees.map(tree => {
       const treeText = `${tree.name} ${tree.subfield.name} ${tree.subfield.industry.name}`;
       let score = cosineSimilarity(studentEmbedding, getMockEmbedding(treeText)) * 100;
@@ -101,6 +120,20 @@ export class RecommendationService {
       const treeSkills = tree.skills.map(s => s.name);
       const subfield = tree.subfield.name;
       const industry = tree.subfield.industry.name;
+
+      // EXACT PHRASE MATCHING: Check if student explicitly mentioned this career path
+      const allInterestText = allStudentItems.join(' ').toLowerCase();
+      const exactMatch = exactPhrases.find(ep => {
+        const phraseLower = ep.phrase.toLowerCase();
+        return allInterestText.includes(phraseLower) && 
+               (ep.subfield === subfield || ep.industry === industry);
+      });
+      
+      if (exactMatch) {
+        // Boost score significantly for explicit career interest matches
+        score += 30 * exactMatch.weight;
+        reasoning += ` | Explicit interest match: "${exactMatch.phrase}" (+${Math.round(30 * exactMatch.weight)})`;
+      }
 
       // BACKWARD MAPPING: Industry/Subfield required skills
       const requiredSkills = getBackwardMappedSkills(industry, subfield);

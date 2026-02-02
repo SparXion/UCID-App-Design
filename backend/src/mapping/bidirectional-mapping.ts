@@ -126,8 +126,13 @@ export const FORWARD_MAPPING: Record<string, string[]> = {
   
   // Design-Specific → Skills
   'Footwear': ['Last Design', 'Pattern Making', 'Upper Construction', 'Sole Engineering', 'Footwear Design', 'Biomechanics'],
+  'Footwear Design': ['Last Design', 'Pattern Making', 'Upper Construction', 'Sole Engineering', 'Footwear Design', 'Biomechanics', 'Ergonomics', 'Performance Design', 'Fit & Comfort'],
   'Furniture': ['Furniture Design', 'Joinery', 'Ergonomics', 'Spatial Design', 'Material Understanding'],
   'Automotive': ['Vehicle Design', 'Aerodynamics', 'Ergonomics', 'Engineering Principles', 'CAD'],
+  'Car Design': ['Vehicle Design', 'Aerodynamics', 'Ergonomics', 'Engineering Principles', 'CAD', '3D Modeling', 'Form Understanding', 'Performance Design', 'Safety Design'],
+  'Car': ['Vehicle Design', 'Aerodynamics', 'Ergonomics', 'Engineering Principles', 'CAD', 'Transportation Design'],
+  'Cars': ['Vehicle Design', 'Aerodynamics', 'Ergonomics', 'Engineering Principles', 'CAD', 'Transportation Design'],
+  'Transportation Design': ['Vehicle Design', 'Aerodynamics', 'Ergonomics', 'Engineering Principles', 'CAD', '3D Modeling', 'Form Understanding', 'Performance Design', 'Safety Design'],
   'Toys & Games': ['Play Patterns', 'Safety Standards', 'Interactive Mechanics', 'Character Systems', 'Character Design', 'Play Design'],
   'Consumer Products': ['Sketching', '3D Modeling', 'Ergonomics', 'Material Selection', 'User Research'],
   'Medical Devices': ['Ergonomics', 'Safety Design', 'Human Factors', 'Precision Design', 'Medical Knowledge'],
@@ -216,22 +221,39 @@ export function getBackwardMappedSkills(industry: string, subfield: string): str
 
 /**
  * Calculate skill overlap between student and industry needs
+ * Uses word boundary matching to prevent false positives (e.g., "car" matching "career")
  */
 export function calculateSkillOverlap(
   studentSkills: string[],
   requiredSkills: string[]
 ): { overlap: string[]; overlapRatio: number } {
-  const normalizedStudent = studentSkills.map(s => s.toLowerCase());
-  const normalizedRequired = requiredSkills.map(s => s.toLowerCase());
+  const normalizedStudent = studentSkills.map(s => s.toLowerCase().trim());
+  const normalizedRequired = requiredSkills.map(s => s.toLowerCase().trim());
   
   const overlap: string[] = [];
+  
   normalizedRequired.forEach(req => {
-    const match = normalizedStudent.find(student => 
-      student.includes(req) || req.includes(student) || student === req
-    );
+    // Use word boundary regex to prevent substring false matches
+    // e.g., "car" should NOT match "career", "cardboard", "careful"
+    const reqWordBoundary = new RegExp(`\\b${req.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    
+    const match = normalizedStudent.find(student => {
+      // Exact match (highest priority)
+      if (student === req) return true;
+      
+      // Word boundary match (prevents substring issues)
+      if (reqWordBoundary.test(student)) return true;
+      
+      // Also check reverse: if student skill contains the required skill as a whole word
+      const studentWordBoundary = new RegExp(`\\b${student.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      if (studentWordBoundary.test(req)) return true;
+      
+      return false;
+    });
+    
     if (match) {
       // Find original case version
-      const original = requiredSkills.find(r => r.toLowerCase() === req);
+      const original = requiredSkills.find(r => r.toLowerCase().trim() === req);
       if (original && !overlap.includes(original)) {
         overlap.push(original);
       }
