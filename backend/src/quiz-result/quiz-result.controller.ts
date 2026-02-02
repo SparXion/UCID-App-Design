@@ -25,12 +25,39 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Quiz data is required' });
     }
     
+    // Check if this is the first quiz result BEFORE saving (to track quiz_complete)
+    const existingResults = await quizResultService.getStudentResults(studentId);
+    const isFirstResult = existingResults.length === 0;
+    
     const result = await quizResultService.saveQuizResult(studentId, dto);
-    await analyticsService.trackEvent({
-      studentId,
-      sessionId: getSessionId(req),
-      name: 'results_saved'
-    });
+    
+    // Track events (don't let analytics errors break the flow)
+    try {
+      if (isFirstResult) {
+        // First time saving results - this means quiz was just completed
+        await analyticsService.trackEvent({
+          studentId,
+          sessionId: getSessionId(req),
+          name: 'quiz_complete',
+          properties: {
+            talentsCount: dto.quizData?.talents?.length || 0,
+            interestsCount: dto.quizData?.interests?.length || 0,
+            hybridMode: dto.quizData?.hybridMode || null
+          }
+        });
+      }
+      
+      // Always track results_saved
+      await analyticsService.trackEvent({
+        studentId,
+        sessionId: getSessionId(req),
+        name: 'results_saved'
+      });
+    } catch (analyticsError) {
+      // Log but don't fail the request if analytics fails
+      console.error('[Save Quiz Result] Analytics error:', analyticsError);
+    }
+    
     res.status(201).json(result);
   } catch (error: any) {
     console.error('[Save Quiz Result] Error:', error);

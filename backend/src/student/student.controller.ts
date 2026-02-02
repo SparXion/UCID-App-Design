@@ -99,16 +99,26 @@ router.post('/:id/quiz', quizLimiter, validateBody(quizSubmissionSchema), async 
     cache.delete(cacheKeys.studentRecommendations(id));
     cache.delete(cacheKeys.studentProfile(id));
     
-    await analyticsService.trackEvent({
-      studentId: id,
-      sessionId: getSessionId(req),
-      name: 'quiz_complete',
-      properties: {
-        talentsCount: dto.talents?.length || 0,
-        interestsCount: dto.interests?.length || 0,
-        hybridMode: dto.hybridMode || null
-      }
-    });
+    // Track quiz completion event (don't let analytics errors break the flow)
+    try {
+      await analyticsService.trackEvent({
+        studentId: id,
+        sessionId: getSessionId(req),
+        name: 'quiz_complete',
+        properties: {
+          talentsCount: dto.talents?.length || 0,
+          interestsCount: dto.interests?.length || 0,
+          hybridMode: dto.hybridMode || null
+        }
+      });
+      logger.info('Quiz completion event tracked', { studentId: id });
+    } catch (analyticsError) {
+      // Log but don't fail the request if analytics fails
+      logger.error('Failed to track quiz_complete event', { 
+        error: (analyticsError as Error).message, 
+        studentId: id 
+      });
+    }
     
     logger.info('Quiz submission successful', { studentId: id });
     res.json({ success: true });
